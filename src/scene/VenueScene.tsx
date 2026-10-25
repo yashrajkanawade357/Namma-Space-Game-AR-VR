@@ -23,12 +23,15 @@ async function loadColliderSource(venue: VenueConfig, onProgress: (p: number) =>
     if (e.total) onProgress(e.loaded / e.total);
   });
   // Scan exports often skip normals and leave glTF's default metalness of 1; with no
-  // environment map either one makes a mesh-only venue render black.
+  // environment map either one makes a mesh-only venue render black. Photogrammetry
+  // rooms are also wound for viewing from outside, so render both sides to see the
+  // walls from within.
   gltf.scene.traverse((obj) => {
     const mesh = obj as THREE.Mesh;
     if (!mesh.isMesh) return;
     if (!mesh.geometry.attributes.normal) mesh.geometry.computeVertexNormals();
     for (const m of ([] as THREE.Material[]).concat(mesh.material)) {
+      m.side = THREE.DoubleSide;
       const std = m as THREE.MeshStandardMaterial;
       if (std.isMeshStandardMaterial && !std.metalnessMap) std.metalness = 0;
     }

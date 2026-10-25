@@ -1,0 +1,78 @@
+.align {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+.align canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.align .side {
+  border-radius: 0;
+  border-width: 0 0 0 1px;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13px;
+}
+.align h1 {
+  font-size: 22px;
+  line-height: 1.15;
+}
+.align h2 {
+  margin-top: 10px;
+  font-weight: 600;
+  font-size: 13px;
+}
+.align .hint {
+  color: var(--muted);
+  font-size: 12px;
+}
+.align .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.align button:not(.btn-primary) {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.align button:not(.btn-primary):hover {
+  background: var(--sunk);
+}
+.align input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: var(--surface);
+}
+.align .measure {
+  display: flex;
+  justify-content: space-between;
+}
+.align .stats {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+}
+.align .stats dd {
+  margin: 0;
+  text-align: right;
+}
+.align pre {
+  background: var(--sunk);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 11px;
+  overflow-x: auto;
+  margin: 0;
+}
