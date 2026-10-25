@@ -1,0 +1,42 @@
+{
+  "name": "namma-space",
+  "version": "0.1.0",
+  "description": "Phone capture to walkable 3D indoor digital twin with POI search, pathfinding and AR navigation",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "check:venue": "node pipeline/check-venue.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yashrajkanawade357/Namma-Space-Game-AR-VR.git"
+  },
+  "author": "Yashraj Kanawade",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/yashrajkanawade357/Namma-Space-Game-AR-VR/issues"
+  },
+  "homepage": "https://github.com/yashrajkanawade357/Namma-Space-Game-AR-VR#readme",
+  "dependencies": {
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.2",
+    "@sparkjsdev/spark": "^2.4.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "three": "^0.186.1",
+    "three-mesh-bvh": "^0.9.16",
+    "zustand": "^5.0.16"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.186.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
+  },
+  "private": true
+}

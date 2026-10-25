@@ -1,0 +1,12 @@
+node_modules
+dist
+.vite
+*.log
+.env
+.env.*
+!.env.example
+
+# Raw captures are large; keep them out of git and upload processed files to storage.
+captures/
+*.ply
+!test/**/*.ply

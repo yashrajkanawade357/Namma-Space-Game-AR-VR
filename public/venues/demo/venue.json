@@ -1,0 +1,8 @@
+{
+  "id": "demo",
+  "name": "Demo flat",
+  "subtitle": "Procedural layout for development, 10 m × 8 m",
+  "collider": { "url": "demo" },
+  "spawn": { "position": [3.9, 0, 3.2], "yaw": 0 },
+  "eyeHeight": 1.6
+}

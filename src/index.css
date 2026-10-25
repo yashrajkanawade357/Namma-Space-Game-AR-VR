@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+/* Palette: survey-map neutrals with one route-green accent, same as the team plan. */
+:root {
+  --bg: #f5f6f3;
+  --surface: #ffffff;
+  --sunk: #eceee9;
+  --fg: #1b201d;
+  --muted: #5d655f;
+  --line: #d9ddd6;
+  --route: #0f6e56;
+  --route-fg: #0b5743;
+  --warn: #a5620b;
+  --warn-soft: #f8ecd9;
+  --glass: rgba(255, 255, 255, 0.86);
+  --scrim: rgba(20, 26, 23, 0.35);
+  --map-wall: #2b302d;
+  --map-low: #b9b4a8;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121614;
+    --surface: #1a1f1c;
+    --sunk: #242a26;
+    --fg: #e7ebe8;
+    --muted: #9aa49d;
+    --line: #2f3632;
+    --route: #4fc49c;
+    --route-fg: #8fe0c2;
+    --warn: #e2a24d;
+    --warn-soft: #33270f;
+    --glass: rgba(26, 31, 28, 0.86);
+    --scrim: rgba(0, 0, 0, 0.5);
+    --map-wall: #e7ebe8;
+    --map-low: #5b625d;
+    color-scheme: dark;
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--body);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+/* Component classes sit in a layer so Tailwind utilities (hidden, sm:*) can override them. */
+@layer components {
+  .display {
+    font-family: var(--display);
+    font-stretch: 112%;
+    font-weight: 800;
+  }
+  .mono {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .hud {
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom))
+      max(12px, env(safe-area-inset-left));
+  }
+  .panel {
+    background: var(--glass);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--glass);
+    border: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  .chip-warn {
+    background: var(--warn-soft);
+    color: var(--warn);
+    border-color: transparent;
+    font-weight: 600;
+  }
+  .icon-btn {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    color: var(--muted);
+  }
+  .icon-btn:hover,
+  .icon-btn[aria-pressed="true"] {
+    background: var(--sunk);
+    color: var(--fg);
+  }
+  .btn-primary {
+    background: var(--route);
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    text-align: center;
+  }
+  .btn-primary:hover {
+    filter: brightness(1.08);
+  }
+  .seg {
+    font-size: 12px;
+    padding: 6px 0;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+  }
+  .seg-on {
+    border-color: var(--route);
+    color: var(--route-fg);
+    font-weight: 600;
+  }
+  .kbd {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    border-bottom-width: 2px;
+    background: var(--surface);
+    white-space: nowrap;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--route);
+  outline-offset: 2px;
+}
