@@ -1,6 +1,7 @@
 import type { VenueConfig } from "./types";
 
-export const DEFAULT_VENUE = "demo";
+/** The venue the bare URL opens. Deployments set VITE_DEFAULT_VENUE to their scanned space. */
+export const DEFAULT_VENUE = (import.meta.env.VITE_DEFAULT_VENUE as string | undefined) || "demo";
 
 /** Reads ?venue=<id> from the URL, falling back to the demo venue. */
 export function venueIdFromUrl(): string {

@@ -19,10 +19,16 @@ public/venues/<venue>/     what gets deployed
 
 1. **Capture** by the SOP in [`docs/SOP.md`](../docs/SOP.md). Export the splat as `.ply` and the mesh as `.glb`
    from the same scan, so both share one coordinate frame.
-2. **Align and scale** in Blender: floor on y = 0, +Y up, units in metres. Check one known length
-   (a door is about 2.0–2.1 m tall). If the splat and mesh came from different tools, align them in
-   CloudCompare with 3–4 matching points first.
-3. **Clean the mesh**: Decimate to about 50k triangles, delete the ceiling if it is noisy, export `collider.glb`.
+2. **Clean the mesh**: weld, simplify and shrink textures into one `.glb`:
+
+   ```bash
+   node pipeline/clean-mesh.mjs captures/home/model.glb public/venues/home/room.glb --triangles 120000 --texture 4096
+   ```
+
+   On the first RealityScan room this took 388k triangles / 25 MB (8K textures) down to 120k / 9 MB in about a second.
+3. **Align and scale** with the alignment tool at `/align.html?venue=home`: Auto-level (or Flip) until the
+   floor is down, click two points of a known length (a door is about 2.0–2.1 m) and set the scale, then
+   copy the printed transform into `venue.json`. Phone scans (ARCore/ARKit) are usually already in metres.
 4. **Compress the splat**: crop floaters in [SuperSplat](https://superspl.at/editor), then
 
    ```bash

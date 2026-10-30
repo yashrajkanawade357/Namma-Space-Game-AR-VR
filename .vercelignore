@@ -1,0 +1,9 @@
+node_modules
+dist
+.vite
+captures
+# Raw scan exports stay local; only the cleaned room.glb and venue.json are deployed.
+public/venues/*/model.glb
+public/venues/*/*.jpg
+public/venues/*/*.png
+public/venues/*/*.ply
