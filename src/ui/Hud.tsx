@@ -12,6 +12,9 @@ export function TopBar({ venue, isDemo }: { venue: VenueConfig; isDemo: boolean 
   const settingsOpen = useApp((s) => s.settingsOpen);
   return (
     <header className="panel pointer-events-auto flex items-center gap-3 px-3 py-2">
+      <a href="/" className="chip !border-[var(--line)] !bg-transparent !text-[var(--fg)]" aria-label="Return to Namma Space home" title="Return to Namma Space home">
+        <span aria-hidden="true">←</span><span className="hidden sm:inline">Home</span>
+      </a>
       <div className="display hidden text-[15px] leading-none sm:block">
         Namma<span className="text-[var(--route)]">/</span>Space
       </div>
