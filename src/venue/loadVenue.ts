@@ -1,7 +1,7 @@
 import type { VenueConfig } from "./types";
 
 /** The venue the bare URL opens. Deployments set VITE_DEFAULT_VENUE to their scanned space. */
-export const DEFAULT_VENUE = (import.meta.env.VITE_DEFAULT_VENUE as string | undefined) || "demo";
+export const DEFAULT_VENUE = (import.meta.env.VITE_DEFAULT_VENUE as string | undefined) || "katpadi";
 
 /** Reads ?venue=<id> from the URL, falling back to the demo venue. */
 export function venueIdFromUrl(): string {
@@ -19,7 +19,7 @@ export function venueBase(id: string): string {
 
 export async function loadVenue(id: string): Promise<VenueConfig> {
   const base = venueBase(id);
-  const res = await fetch(`${base}venue.json`);
+  const res = await fetch(`${base}venue.json`, { cache: "no-store" });
   if (!res.ok) throw new Error(`Couldn't find venue "${id}". Check public/venues/${id}/venue.json.`);
   const venue = (await res.json()) as VenueConfig;
   // Relative asset paths in venue.json are resolved against the venue folder.

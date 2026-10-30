@@ -35,6 +35,13 @@ export interface VenueConfig {
     rotation?: Vec3;
     scale?: number;
   };
+  /** Optional hidden floor patch for scans whose mesh has gaps underfoot. */
+  walkableFloor?: {
+    /** Center of the floor patch in venue coordinates. */
+    position: Vec3;
+    /** Width and depth in metres. */
+    size: [number, number];
+  };
   spawn: {
     position: Vec3;
     /** Facing direction in degrees, 0 = looking towards -Z. */

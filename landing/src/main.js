@@ -1,0 +1,1 @@
+(()=>{const{createElement:h}=window.React,{MotionConfig:MC}=window.Motion,{Landing,Experience}=window.NammaScreens;window.ReactDOM.flushSync(()=>window.ReactDOM.createRoot(document.querySelector('#root')).render(h(MC,{reducedMotion:'user'},h(Landing),h(Experience))))})();

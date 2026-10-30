@@ -482,3 +482,15 @@ Built with curiosity, experimentation, and a shared ambition to make physical sp
 <p align="center">
   <em>Every space has a story. We're building a way to step inside it.</em>
 </p>
+
+## 🌍 Landing Website
+
+The repository also includes the Namma Space landing site in [`landing/`](landing/). It contains the Earth-backed Three.js intro and transitions into the viewer above.
+
+```bash
+cd landing
+npm install
+npm start
+```
+
+Open `http://localhost:4173/`. The start command builds the viewer into `landing/experience/` before serving the combined site.

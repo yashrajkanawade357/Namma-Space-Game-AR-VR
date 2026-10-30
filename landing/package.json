@@ -1,0 +1,13 @@
+{
+  "name": "namma-space-landing",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "npm run build && node serve.js",
+    "build": "npm run check:landing && npm --prefix .. run build",
+    "check:landing": "node --check src/ui/shared.js && node --check src/ui/landing-screen.js && node --check src/ui/experience-screen.js && node --check src/spatial/scene.js && node --check src/main.js"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  }
+}

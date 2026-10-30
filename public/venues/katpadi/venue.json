@@ -1,0 +1,22 @@
+{
+  "id": "katpadi",
+  "name": "Katpadi",
+  "subtitle": "Scaniverse digital twin",
+  "splat": {
+    "url": "scene-ply.spz",
+    "rotation": [180, 0, 0]
+  },
+  "collider": {
+    "url": "collider.glb"
+  },
+  "walkableFloor": {
+    "position": [-0.35, 0.2, 0.05],
+    "size": [8.8, 8.0]
+  },
+  "spawn": {
+    "position": [-0.35, 0.25, 0.05],
+    "yaw": 0
+  },
+  "eyeHeight": 1.6,
+  "credits": ["Scaniverse capture", "Harshit"]
+}

@@ -97,6 +97,16 @@ export function VenueScene({ venue, onSlice }: { venue: VenueConfig; onSlice: (s
           : Promise.resolve();
 
         const [source] = await Promise.all([meshTask, splatTask]);
+        if (venue.walkableFloor) {
+          const [width, depth] = venue.walkableFloor.size;
+          const floor = new THREE.Mesh(
+            new THREE.BoxGeometry(width, 0.1, depth),
+            new THREE.MeshBasicMaterial({ visible: false }),
+          );
+          floor.name = "walkable-floor-collision";
+          floor.position.set(...venue.walkableFloor.position);
+          source.add(floor);
+        }
         place(source, venue.collider);
         const collider = buildCollider(source);
         progress.mesh = 1;

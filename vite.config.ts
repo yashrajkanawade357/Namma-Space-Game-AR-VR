@@ -38,7 +38,7 @@ export default defineConfig({
   // The parent landing site serves the production viewer at /experience/.
   base: BASE,
   plugins: [react(), tailwindcss(), testVenues()],
-  build: { outDir: "../experience", emptyOutDir: true },
+  build: { outDir: "landing/experience", emptyOutDir: true },
   // Spark ships its own WASM worker; keep it out of dependency pre-bundling.
   optimizeDeps: { exclude: ["@sparkjsdev/spark"] },
   server: { host: true },
