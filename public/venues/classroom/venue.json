@@ -1,0 +1,32 @@
+{
+  "id": "classroom",
+  "name": "Classroom",
+  "subtitle": "Scaniverse scan, 9.6 m × 9.2 m",
+  "collider": {
+    "url": "classroom.glb",
+    "hiResUrl": "classroom-8k.glb",
+    "position": [
+      0.357,
+      -0.001,
+      -0.045
+    ],
+    "rotation": [
+      0,
+      0,
+      0
+    ],
+    "scale": 1
+  },
+  "spawn": {
+    "position": [
+      -0.3,
+      0,
+      0.6
+    ],
+    "yaw": 0
+  },
+  "eyeHeight": 1.6,
+  "credits": [
+    "Scaniverse capture by Harshit"
+  ]
+}
