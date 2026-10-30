@@ -2,7 +2,8 @@ import { create } from "zustand";
 
 export type Quality = "low" | "medium" | "high";
 
-export const QUALITY_DPR: Record<Quality, number> = { low: 0.75, medium: 1, high: 1.5 };
+/** Upper bound on render resolution per quality level; never above the screen's own pixel ratio. */
+export const QUALITY_DPR: Record<Quality, number> = { low: 0.75, medium: 1.5, high: 2 };
 
 interface PlayerPose {
   x: number;

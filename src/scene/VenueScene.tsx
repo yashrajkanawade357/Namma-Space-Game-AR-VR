@@ -3,7 +3,7 @@ import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { SparkRenderer, SplatMesh } from "@sparkjsdev/spark";
-import { useApp } from "../store";
+import { isTouchDevice, useApp } from "../store";
 import type { Vec3, VenueConfig } from "../venue/types";
 import { buildCollider, sliceCollider, type FloorSlice } from "./collider";
 import { buildDemoLayout } from "./demoLayout";
@@ -17,24 +17,41 @@ function place(obj: THREE.Object3D, t: { position?: Vec3; rotation?: Vec3; scale
   if (t.scale) obj.scale.setScalar(t.scale);
 }
 
-async function loadColliderSource(venue: VenueConfig, onProgress: (p: number) => void): Promise<THREE.Object3D> {
+/** Background and fog colour for scanned rooms: a soft ceiling tone that fills the open top of a scan. */
+export const SCAN_SKY = "#ebe7e0";
+
+const isBaked = (venue: VenueConfig) => venue.collider.url !== "demo" && (venue.collider.shading ?? "baked") === "baked";
+
+async function loadColliderSource(venue: VenueConfig, maxAnisotropy: number, onProgress: (p: number) => void): Promise<THREE.Object3D> {
   if (venue.collider.url === "demo") return buildDemoLayout();
-  const gltf = await new GLTFLoader().loadAsync(venue.collider.url, (e) => {
+  // Phones get the lighter texture; desktops can afford the sharper one.
+  const url = venue.collider.hiResUrl && !isTouchDevice() ? venue.collider.hiResUrl : venue.collider.url;
+  const gltf = await new GLTFLoader().loadAsync(url, (e) => {
     if (e.total) onProgress(e.loaded / e.total);
   });
-  // Scan exports often skip normals and leave glTF's default metalness of 1; with no
-  // environment map either one makes a mesh-only venue render black. Photogrammetry
-  // rooms are also wound for viewing from outside, so render both sides to see the
-  // walls from within.
+  const baked = isBaked(venue);
+  // Photogrammetry rooms are wound for viewing from outside, so every material renders
+  // both sides to show the walls from within.
   gltf.scene.traverse((obj) => {
     const mesh = obj as THREE.Mesh;
     if (!mesh.isMesh) return;
-    if (!mesh.geometry.attributes.normal) mesh.geometry.computeVertexNormals();
-    for (const m of ([] as THREE.Material[]).concat(mesh.material)) {
-      m.side = THREE.DoubleSide;
+    mesh.material = ([] as THREE.Material[]).concat(mesh.material).map((m) => {
       const std = m as THREE.MeshStandardMaterial;
+      if (std.map) std.map.anisotropy = maxAnisotropy;
+      // A phone scan's texture already holds the room's real light. Showing it unlit keeps
+      // the captured colours instead of shading them a second time into grey plastic.
+      if (baked && std.map) {
+        m.dispose();
+        return new THREE.MeshBasicMaterial({ map: std.map, side: THREE.DoubleSide, toneMapped: false });
+      }
+      // Lit fallback: exports often skip normals and leave glTF's default metalness of 1,
+      // which renders black without an environment map.
+      if (!mesh.geometry.attributes.normal) mesh.geometry.computeVertexNormals();
       if (std.isMeshStandardMaterial && !std.metalnessMap) std.metalness = 0;
-    }
+      m.side = THREE.DoubleSide;
+      return m;
+    });
+    if (Array.isArray(mesh.material) && mesh.material.length === 1) mesh.material = mesh.material[0];
   });
   return gltf.scene;
 }
@@ -56,7 +73,7 @@ export function VenueScene({ venue, onSlice }: { venue: VenueConfig; onSlice: (s
 
     (async () => {
       try {
-        const meshTask = loadColliderSource(venue, (p) => {
+        const meshTask = loadColliderSource(venue, gl.capabilities.getMaxAnisotropy(), (p) => {
           progress.mesh = p * 0.9;
           report();
         });
@@ -97,14 +114,15 @@ export function VenueScene({ venue, onSlice }: { venue: VenueConfig; onSlice: (s
     return () => {
       cancelled = true;
     };
-  }, [venue, onSlice]);
+  }, [venue, onSlice, gl]);
 
-  // Splats carry their own baked lighting; meshes (demo, or a venue whose splat isn't ready) need lights.
-  const meshLit = !venue.splat;
+  // Splats and baked scans carry their own lighting; only the demo and "lit" meshes need lights.
+  const meshLit = !venue.splat && !isBaked(venue);
 
   return (
     <>
       <primitive object={spark} />
+      {isBaked(venue) && !venue.splat && <fog attach="fog" args={[SCAN_SKY, 7, 24]} />}
       <hemisphereLight args={[0xffffff, 0xb9ae9c, meshLit ? 0.9 : 0.4]} />
       {meshLit && (
         <directionalLight

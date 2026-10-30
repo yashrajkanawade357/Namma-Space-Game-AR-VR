@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { QUALITY_DPR, useApp } from "./store";
 import { loadVenue, venueIdFromUrl } from "./venue/loadVenue";
 import type { VenueConfig } from "./venue/types";
-import { VenueScene } from "./scene/VenueScene";
+import { SCAN_SKY, VenueScene } from "./scene/VenueScene";
 import type { FloorSlice } from "./scene/collider";
 import { Minimap } from "./ui/Minimap";
 import { ErrorScreen, Fps, HelpOverlay, Joystick, LoadingScreen, SettingsPanel, TopBar, WalkHint } from "./ui/Hud";
@@ -32,7 +32,7 @@ export default function App() {
       {venue && (
         <Canvas
           shadows={!venue.splat}
-          dpr={Math.min(QUALITY_DPR[quality], window.devicePixelRatio * QUALITY_DPR[quality])}
+          dpr={Math.min(QUALITY_DPR[quality], window.devicePixelRatio)}
           camera={{ fov: 70, near: 0.05, far: 200 }}
           gl={{ antialias: quality !== "low", powerPreference: "high-performance" }}
           onCreated={({ gl }) => {
@@ -41,7 +41,7 @@ export default function App() {
           }}
           className="!absolute inset-0 touch-none"
         >
-          <color attach="background" args={[venue.splat ? "#0e1110" : "#dfe3dc"]} />
+          <color attach="background" args={[venue.splat ? "#0e1110" : isDemo ? "#dfe3dc" : SCAN_SKY]} />
           <Suspense fallback={null}>
             <VenueScene venue={venue} onSlice={onSlice} />
           </Suspense>

@@ -24,6 +24,13 @@ export interface VenueConfig {
    */
   collider: {
     url: string | "demo";
+    /** Same mesh with a sharper texture, loaded on desktops instead of `url`. */
+    hiResUrl?: string;
+    /**
+     * "baked" (default for scans) shows the texture as captured, since the real lighting is
+     * already in it; "lit" shades the mesh with scene lights.
+     */
+    shading?: "baked" | "lit";
     position?: Vec3;
     rotation?: Vec3;
     scale?: number;

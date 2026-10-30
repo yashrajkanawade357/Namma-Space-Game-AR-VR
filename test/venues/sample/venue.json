@@ -2,7 +2,7 @@
   "id": "sample",
   "name": "Sample room",
   "subtitle": "Test mesh, 8 m × 6 m L-shaped room",
-  "collider": { "url": "collider.gltf" },
+  "collider": { "url": "collider.gltf", "shading": "lit" },
   "spawn": { "position": [0, 0, 2.2], "yaw": 0 },
   "eyeHeight": 1.6,
   "credits": ["test mesh from pipeline/make-sample.mjs"]
