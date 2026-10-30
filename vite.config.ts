@@ -12,7 +12,9 @@ const TYPES: Record<string, string> = {
   ".ply": "application/octet-stream",
 };
 
-/** Dev only: serves test/venues/<id>/ at /venues/<id>/ when public/ has no such venue. */
+const BASE = "/experience/";
+
+/** Dev only: serves test/venues/<id>/ at <base>venues/<id>/ when public/ has no such venue. */
 function testVenues(): Plugin {
   const root = resolve("test/venues");
   return {
@@ -20,7 +22,8 @@ function testVenues(): Plugin {
     apply: "serve",
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
-        const url = decodeURIComponent((req.url ?? "").split("?")[0]);
+        let url = decodeURIComponent((req.url ?? "").split("?")[0]);
+        if (url.startsWith(BASE)) url = url.slice(BASE.length - 1);
         if (!url.startsWith("/venues/") || existsSync(join(resolve("public"), url))) return next();
         const file = normalize(join(root, url.slice("/venues/".length)));
         if (!file.startsWith(root) || !existsSync(file) || !statSync(file).isFile()) return next();
@@ -33,7 +36,7 @@ function testVenues(): Plugin {
 
 export default defineConfig({
   // The parent landing site serves the production viewer at /experience/.
-  base: "/experience/",
+  base: BASE,
   plugins: [react(), tailwindcss(), testVenues()],
   build: { outDir: "../experience", emptyOutDir: true },
   // Spark ships its own WASM worker; keep it out of dependency pre-bundling.

@@ -12,7 +12,9 @@ export function venueIdFromUrl(): string {
 /** Venue folders live in public/venues/<id>/, or on remote storage via VITE_VENUE_BASE. */
 export function venueBase(id: string): string {
   const remote = import.meta.env.VITE_VENUE_BASE as string | undefined;
-  return `${remote ? remote.replace(/\/$/, "") : "/venues"}/${id}/`;
+  // Without remote storage, venues live under public/, served from the app's base path
+  // (e.g. /experience/ when the viewer sits inside the landing site).
+  return `${remote ? remote.replace(/\/$/, "") : `${import.meta.env.BASE_URL}venues`}/${id}/`;
 }
 
 export async function loadVenue(id: string): Promise<VenueConfig> {
