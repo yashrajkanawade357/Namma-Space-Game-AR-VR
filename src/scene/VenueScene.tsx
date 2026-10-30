@@ -8,6 +8,8 @@ import type { Vec3, VenueConfig } from "../venue/types";
 import { buildCollider, sliceCollider, type FloorSlice } from "./collider";
 import { buildDemoLayout } from "./demoLayout";
 import { Player } from "./Player";
+import { CameraDirector } from "./CameraDirector";
+import { ScanGrade } from "./ScanGrade";
 
 const deg = (v?: Vec3) => (v ? new THREE.Euler(...v.map(THREE.MathUtils.degToRad) as Vec3) : new THREE.Euler());
 
@@ -59,6 +61,7 @@ async function loadColliderSource(venue: VenueConfig, maxAnisotropy: number, onP
 export function VenueScene({ venue, onSlice }: { venue: VenueConfig; onSlice: (s: FloorSlice) => void }) {
   const gl = useThree((s) => s.gl);
   const showCollider = useApp((s) => s.showCollider);
+  const quality = useApp((s) => s.quality);
   const [world, setWorld] = useState<{ visual: THREE.Object3D | null; collider: THREE.Mesh } | null>(null);
   const spark = useMemo(() => new SparkRenderer({ renderer: gl }), [gl]);
 
@@ -149,6 +152,8 @@ export function VenueScene({ venue, onSlice }: { venue: VenueConfig; onSlice: (s
       {world?.visual && <primitive object={world.visual} />}
       {world && <primitive object={world.collider} visible={showCollider} />}
       {world && <Player venue={venue} collider={world.collider} />}
+      {world && <CameraDirector bounds={world.collider.geometry.boundingBox!} />}
+      {world && isBaked(venue) && !venue.splat && quality !== "low" && <ScanGrade />}
     </>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { isTouchDevice, useApp, type Quality } from "../store";
+import { isTouchDevice, toggleOverview, useApp, type Quality } from "../store";
 import type { VenueConfig } from "../venue/types";
 
 function requestWalk(canvas: HTMLCanvasElement | null) {
@@ -10,6 +10,7 @@ function requestWalk(canvas: HTMLCanvasElement | null) {
 export function TopBar({ venue, isDemo }: { venue: VenueConfig; isDemo: boolean }) {
   const set = useApp((s) => s.set);
   const settingsOpen = useApp((s) => s.settingsOpen);
+  const view = useApp((s) => s.view);
   return (
     <header className="panel pointer-events-auto flex items-center gap-3 px-3 py-2">
       <a href="/" className="chip !border-[var(--line)] !bg-transparent !text-[var(--fg)]" aria-label="Return to Namma Space home" title="Return to Namma Space home">
@@ -25,6 +26,10 @@ export function TopBar({ venue, isDemo }: { venue: VenueConfig; isDemo: boolean 
       </div>
       {isDemo && <span className="chip chip-warn hidden sm:inline-flex">Demo layout, not a scan</span>}
       <div className="ml-auto flex items-center gap-1">
+        <IconButton label={view === "overview" ? "Back to walking (V)" : "Overview (V)"} pressed={view === "overview"} onClick={toggleOverview}>
+          <path d="M12 3 3 8l9 5 9-5-9-5Z" />
+          <path d="m3 13 9 5 9-5" />
+        </IconButton>
         <IconButton label="Controls" onClick={() => set({ helpOpen: true })}>
           <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2-3 4M12 17h.01" />
           <circle cx="12" cy="12" r="9" />
@@ -92,7 +97,8 @@ export function SettingsPanel() {
 export function HelpOverlay({ canvas, venue }: { canvas: HTMLCanvasElement | null; venue: VenueConfig }) {
   const helpOpen = useApp((s) => s.helpOpen);
   const loading = useApp((s) => s.loading);
-  if (!helpOpen || loading) return null;
+  const view = useApp((s) => s.view);
+  if (!helpOpen || loading || view !== "walk") return null;
   const touch = isTouchDevice();
   const rows: [string, string][] = touch
     ? [
@@ -104,6 +110,7 @@ export function HelpOverlay({ canvas, venue }: { canvas: HTMLCanvasElement | nul
         ["Mouse", "Look around"],
         ["Shift", "Walk faster"],
         ["R", "Back to the start"],
+        ["V", "Overview of the whole space"],
         ["H", "Show these controls"],
         ["Esc", "Free the mouse"],
       ];
@@ -173,20 +180,27 @@ export function ErrorScreen() {
 export function WalkHint() {
   const walking = useApp((s) => s.walking);
   const helpOpen = useApp((s) => s.helpOpen);
-  if (walking || helpOpen || isTouchDevice()) return null;
+  const view = useApp((s) => s.view);
+  const loading = useApp((s) => s.loading);
+  const touch = isTouchDevice();
+  if (loading) return null;
+  if (view === "intro") return <div className="chip pointer-events-none">{touch ? "Tap" : "Click or press any key"} to skip</div>;
+  if (view === "overview") return <div className="chip pointer-events-none">{touch ? "Drag to turn, pinch to zoom" : "Drag to turn, scroll to zoom · V to walk again"}</div>;
+  if (walking || helpOpen || touch) return null;
   return <div className="chip pointer-events-none">Click the view to look around</div>;
 }
 
 /** Virtual joystick for phones; writes a -1..1 vector to the store. */
 export function Joystick() {
   const helpOpen = useApp((s) => s.helpOpen);
+  const view = useApp((s) => s.view);
   const base = useRef<HTMLDivElement>(null);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
   const active = useRef<number | null>(null);
   const R = 44;
 
   useEffect(() => () => useApp.setState({ stick: { x: 0, y: 0 } }), []);
-  if (!isTouchDevice() || helpOpen) return null;
+  if (!isTouchDevice() || helpOpen || view !== "walk") return null;
 
   const update = (e: React.PointerEvent) => {
     const r = base.current!.getBoundingClientRect();

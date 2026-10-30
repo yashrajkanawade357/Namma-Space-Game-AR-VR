@@ -14,6 +14,7 @@ export default function App() {
   const [slice, setSlice] = useState<FloorSlice | null>(null);
   const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
   const quality = useApp((s) => s.quality);
+  const view = useApp((s) => s.view);
 
   useEffect(() => {
     loadVenue(venueIdFromUrl())
@@ -33,7 +34,7 @@ export default function App() {
         <Canvas
           shadows={!venue.splat}
           dpr={Math.min(QUALITY_DPR[quality], window.devicePixelRatio)}
-          camera={{ fov: 70, near: 0.05, far: 200 }}
+          camera={{ fov: 75, near: 0.05, far: 200 }}
           gl={{ antialias: quality !== "low", powerPreference: "high-performance" }}
           onCreated={({ gl }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
@@ -68,7 +69,9 @@ export default function App() {
               <Fps />
             </div>
           </div>
-          <div className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/80 ring-1 ring-black/30" aria-hidden="true" />
+          {view === "walk" && (
+            <div className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/80 ring-1 ring-black/30" aria-hidden="true" />
+          )}
         </div>
       )}
 

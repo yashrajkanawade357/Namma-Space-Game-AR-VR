@@ -26,6 +26,7 @@ public/venues/<venue>/     what gets deployed
    ```
 
    On the first RealityScan room this took 388k triangles / 25 MB (8K textures) down to 120k / 9 MB in about a second.
+   It also drops small floating pieces of mesh (`--debris 0.005` = under 0.5% of all triangles; `0` keeps everything).
 3. **Align and scale** with the alignment tool at `/align.html?venue=home`: Auto-level (or Flip) until the
    floor is down, click two points of a known length (a door is about 2.0–2.1 m) and set the scale, then
    copy the printed transform into `venue.json`. Phone scans (ARCore/ARKit) are usually already in metres.

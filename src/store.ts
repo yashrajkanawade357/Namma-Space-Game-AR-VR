@@ -11,8 +11,15 @@ interface PlayerPose {
   yaw: number;
 }
 
+/**
+ * Who drives the camera: the opening fly-through, the first-person walker, or the
+ * overhead overview the visitor can toggle.
+ */
+export type View = "intro" | "walk" | "overview";
+
 interface AppState {
   loading: { label: string; progress: number } | null;
+  view: View;
   error: string | null;
   /** True while the mouse is captured on desktop or the walkthrough is active on touch. */
   walking: boolean;
@@ -32,6 +39,7 @@ interface AppState {
 
 export const useApp = create<AppState>((set) => ({
   loading: { label: "Loading venue", progress: 0 },
+  view: "intro",
   error: null,
   walking: false,
   helpOpen: true,
@@ -47,3 +55,11 @@ export const useApp = create<AppState>((set) => ({
 }));
 
 export const isTouchDevice = () => window.matchMedia("(pointer: coarse)").matches;
+
+/** Switches between walking and the overhead overview; ignored during the intro. */
+export function toggleOverview() {
+  const { view } = useApp.getState();
+  if (view === "intro") return;
+  if (view === "walk") document.exitPointerLock?.();
+  useApp.setState({ view: view === "walk" ? "overview" : "walk", settingsOpen: false });
+}

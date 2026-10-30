@@ -2,8 +2,9 @@ import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { MeshBVH } from "three-mesh-bvh";
-import { useApp } from "../store";
+import { toggleOverview, useApp } from "../store";
 import type { VenueConfig } from "../venue/types";
+import { playerView } from "./playerView";
 
 const RADIUS = 0.3;
 const GRAVITY = -20;
@@ -11,6 +12,11 @@ const SUBSTEPS = 5;
 const LOOK_SPEED = 0.0022;
 const TOUCH_LOOK_SPEED = 0.005;
 const RUN_MULTIPLIER = 1.8;
+/** How quickly walking speed eases towards the input (per second); lower feels heavier. */
+const ACCELERATION = 9;
+/** Head bob: vertical sway in metres at full walking speed, and steps per metre. */
+const BOB_HEIGHT = 0.022;
+const BOB_STEPS_PER_METRE = 1.7;
 
 /**
  * First-person walker. The player is a capsule whose top sits at eye level; every
@@ -27,6 +33,9 @@ export function Player({ venue, collider }: { venue: VenueConfig; collider: THRE
     () => ({
       position: new THREE.Vector3(),
       velocity: new THREE.Vector3(),
+      /** Smoothed horizontal walking velocity, eased towards the input each frame. */
+      walk: new THREE.Vector3(),
+      bobPhase: 0,
       onGround: false,
       yaw: 0,
       pitch: 0,
@@ -43,8 +52,12 @@ export function Player({ venue, collider }: { venue: VenueConfig; collider: THRE
     const [x, y, z] = venue.spawn.position;
     body.position.set(x, y + eye, z);
     body.velocity.set(0, 0, 0);
+    body.walk.set(0, 0, 0);
     body.yaw = THREE.MathUtils.degToRad(venue.spawn.yaw ?? 0);
     body.pitch = 0;
+    // The intro flies to this pose before the walker takes over.
+    playerView.position.copy(body.position);
+    playerView.quaternion.setFromEuler(new THREE.Euler(0, body.yaw, 0, "YXZ"));
   }, [venue, body, eye, resetToken]);
 
   useEffect(() => {
@@ -55,6 +68,7 @@ export function Player({ venue, collider }: { venue: VenueConfig; collider: THRE
       keys.current.add(e.code);
       if (e.code === "KeyR") useApp.getState().reset();
       if (e.code === "KeyH") useApp.setState((s) => ({ helpOpen: !s.helpOpen }));
+      if (e.code === "KeyV") toggleOverview();
     };
     const up = (e: KeyboardEvent) => keys.current.delete(e.code);
     const blur = () => keys.current.clear();
@@ -72,8 +86,8 @@ export function Player({ venue, collider }: { venue: VenueConfig; collider: THRE
     let lastX = 0;
     let lastY = 0;
     const onPointerDown = (e: PointerEvent) => {
-      const { helpOpen } = useApp.getState();
-      if (helpOpen) return;
+      const { helpOpen, view } = useApp.getState();
+      if (helpOpen || view !== "walk") return;
       if (e.pointerType === "mouse" && document.pointerLockElement !== el) {
         el.requestPointerLock?.()?.catch?.(() => undefined);
       }
@@ -131,9 +145,12 @@ export function Player({ venue, collider }: { venue: VenueConfig; collider: THRE
   );
 
   useFrame((state, frameDelta) => {
-    const { speed, stick, helpOpen } = useApp.getState();
+    const { speed, stick, helpOpen, view } = useApp.getState();
+    // The intro and the overview fly the camera themselves; the walker waits where it stands.
+    if (view !== "walk" || playerView.flying) return;
     const bvh = (collider.geometry as THREE.BufferGeometry & { boundsTree?: MeshBVH }).boundsTree;
-    const dt = Math.min(frameDelta, 0.05) / SUBSTEPS;
+    const frameDt = Math.min(frameDelta, 0.05);
+    const dt = frameDt / SUBSTEPS;
     const k = keys.current;
 
     // Input → desired horizontal direction in world space.
@@ -153,11 +170,13 @@ export function Player({ venue, collider }: { venue: VenueConfig; collider: THRE
     tmp.move.set(0, 0, 0).addScaledVector(tmp.forward, fwd).addScaledVector(tmp.right, side);
     if (tmp.move.lengthSq() > 1) tmp.move.normalize();
     tmp.move.multiplyScalar(speed * run);
+    // Ease into and out of walking instead of starting and stopping instantly.
+    body.walk.lerp(tmp.move, 1 - Math.exp(-ACCELERATION * frameDt));
 
     for (let i = 0; i < SUBSTEPS && bvh; i++) {
       body.velocity.y += body.onGround ? 0 : GRAVITY * dt;
       body.position.addScaledVector(body.velocity, dt);
-      body.position.addScaledVector(tmp.move, dt);
+      body.position.addScaledVector(body.walk, dt);
 
       tmp.seg.copy(body.segment);
       tmp.seg.start.add(body.position);
@@ -193,9 +212,17 @@ export function Player({ venue, collider }: { venue: VenueConfig; collider: THRE
     // Fell through a hole in the scan: put the visitor back at the entrance.
     if (body.position.y < -6) useApp.getState().reset();
 
+    // Gentle head bob while walking on the floor, fading out as the visitor slows down.
+    const walkSpeed = body.walk.length();
+    if (body.onGround) body.bobPhase += walkSpeed * frameDt * BOB_STEPS_PER_METRE * Math.PI;
+    const bob = Math.sin(body.bobPhase) * BOB_HEIGHT * Math.min(1, walkSpeed / 1.6);
+
     camera.position.copy(body.position);
+    camera.position.y += bob;
     tmp.euler.set(body.pitch, body.yaw, 0);
     camera.quaternion.setFromEuler(tmp.euler);
+    playerView.position.copy(body.position);
+    playerView.quaternion.copy(camera.quaternion);
 
     if (state.clock.elapsedTime - lastPose.current > 0.1) {
       lastPose.current = state.clock.elapsedTime;
