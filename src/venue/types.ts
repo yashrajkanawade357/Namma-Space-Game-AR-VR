@@ -19,6 +19,18 @@ export interface VenueConfig {
     scale?: number;
   };
   /**
+   * Coloured point cloud as the visible layer (x y z + red green blue .ply), e.g. from
+   * pipeline/points-to-venue.mjs. Used when a scan has no mesh or splat export.
+   */
+  points?: {
+    url: string;
+    /** Dot diameter in metres. Defaults to 0.022. */
+    size?: number;
+    position?: Vec3;
+    rotation?: Vec3;
+    scale?: number;
+  };
+  /**
    * Hidden mesh used for collision, floor detection and the minimap.
    * "demo" builds the procedural demo layout instead of loading a file.
    */

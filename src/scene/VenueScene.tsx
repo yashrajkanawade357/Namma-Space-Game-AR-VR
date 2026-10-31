@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { PLYLoader } from "three/examples/jsm/loaders/PLYLoader.js";
 import { SparkRenderer, SplatMesh } from "@sparkjsdev/spark";
 import { isTouchDevice, useApp } from "../store";
 import type { Vec3, VenueConfig } from "../venue/types";
@@ -58,6 +59,34 @@ async function loadColliderSource(venue: VenueConfig, maxAnisotropy: number, onP
   return gltf.scene;
 }
 
+/** Soft round dot, so a point cloud reads as surfaces rather than square pixels. */
+function dotTexture() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const ctx = c.getContext("2d")!;
+  const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, "rgba(255,255,255,1)");
+  g.addColorStop(0.7, "rgba(255,255,255,1)");
+  g.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(c);
+}
+
+async function loadPoints(p: NonNullable<VenueConfig["points"]>): Promise<THREE.Points> {
+  const geometry = await new PLYLoader().loadAsync(p.url);
+  const material = new THREE.PointsMaterial({
+    size: p.size ?? 0.022,
+    vertexColors: true,
+    map: dotTexture(),
+    alphaTest: 0.5,
+    toneMapped: false,
+  });
+  const points = new THREE.Points(geometry, material);
+  place(points, p);
+  return points;
+}
+
 export function VenueScene({ venue, onSlice }: { venue: VenueConfig; onSlice: (s: FloorSlice) => void }) {
   const gl = useThree((s) => s.gl);
   const showCollider = useApp((s) => s.showCollider);
@@ -99,7 +128,8 @@ export function VenueScene({ venue, onSlice }: { venue: VenueConfig; onSlice: (s
             })()
           : Promise.resolve();
 
-        const [source] = await Promise.all([meshTask, splatTask]);
+        const pointsTask = venue.points ? loadPoints(venue.points) : Promise.resolve(null);
+        const [source, , points] = await Promise.all([meshTask, splatTask, pointsTask]);
         if (venue.walkableFloor) {
           const [width, depth] = venue.walkableFloor.size;
           const floor = new THREE.Mesh(
@@ -116,8 +146,8 @@ export function VenueScene({ venue, onSlice }: { venue: VenueConfig; onSlice: (s
         if (cancelled) return;
 
         onSlice(sliceCollider(collider));
-        // With a splat, the mesh stays hidden and only drives physics; the demo shows its own geometry.
-        setWorld({ visual: splat ?? source, collider });
+        // With a splat or point cloud, the mesh stays hidden and only drives physics; otherwise it is the view.
+        setWorld({ visual: splat ?? points ?? source, collider });
         set({ loading: null });
       } catch (err) {
         if (!cancelled) set({ loading: null, error: err instanceof Error ? err.message : String(err) });

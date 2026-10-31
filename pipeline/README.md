@@ -50,6 +50,20 @@ public/venues/<venue>/     what gets deployed
 For deployment, large files can live on Cloudflare R2 instead of the repo: upload the folder and set
 `VITE_VENUE_BASE` to the bucket's public URL.
 
+## Point-cloud scans
+
+If a scan was only exported as a coloured point cloud (Scaniverse `.ply` with x y z + red green blue), build a
+venue from it directly:
+
+```bash
+node pipeline/points-to-venue.mjs "captures/hostel/scan.ply" public/venues/hostel --name "Hostel room" --z-up
+```
+
+It levels and centres the cloud, generates the collision model from it (a floor plus a column for every
+10 cm cell where points sit at body height, so walls, beds and tables block you), and picks a start point
+facing across the room. A mesh or splat export of the same scan still looks better; use this when that is
+all there is.
+
 ## Time each step
 
 The finale (Dec 16) is a timed on-site capture. Log how long every step takes on each practice run in

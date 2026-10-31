@@ -25,6 +25,7 @@ export async function loadVenue(id: string): Promise<VenueConfig> {
   // Relative asset paths in venue.json are resolved against the venue folder.
   const resolve = (url: string) => (/^(https?:)?\/\//.test(url) || url.startsWith("/") ? url : base + url);
   if (venue.splat) venue.splat.url = resolve(venue.splat.url);
+  if (venue.points) venue.points.url = resolve(venue.points.url);
   if (venue.collider.url !== "demo") venue.collider.url = resolve(venue.collider.url);
   if (venue.collider.hiResUrl) venue.collider.hiResUrl = resolve(venue.collider.hiResUrl);
   return venue;
