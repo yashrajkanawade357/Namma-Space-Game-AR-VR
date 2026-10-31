@@ -20,7 +20,7 @@ export default function App() {
     loadVenue(venueIdFromUrl())
       .then((v) => {
         setVenue(v);
-        document.title = `${v.name} · Namma Space`;
+        document.title = `${v.name} · Doorway`;
       })
       .catch((err: Error) => useApp.setState({ loading: null, error: err.message }));
   }, []);

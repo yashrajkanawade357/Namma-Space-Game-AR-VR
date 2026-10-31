@@ -13,11 +13,11 @@ export function TopBar({ venue, isDemo }: { venue: VenueConfig; isDemo: boolean 
   const view = useApp((s) => s.view);
   return (
     <header className="panel pointer-events-auto flex items-center gap-3 px-3 py-2">
-      <a href="/" className="chip !border-[var(--line)] !bg-transparent !text-[var(--fg)]" aria-label="Return to Namma Space home" title="Return to Namma Space home">
+      <a href="/" className="chip !border-[var(--line)] !bg-transparent !text-[var(--fg)]" aria-label="Return to the Doorway home page" title="Return to the Doorway home page">
         <span aria-hidden="true">←</span><span className="hidden sm:inline">Home</span>
       </a>
       <div className="display hidden text-[15px] leading-none sm:block">
-        Namma<span className="text-[var(--route)]">/</span>Space
+        Door<span className="text-[var(--route)]">/</span>way
       </div>
       <div className="hidden h-5 w-px bg-[var(--line)] sm:block" />
       <div className="min-w-0">
@@ -147,7 +147,7 @@ export function LoadingScreen() {
     <div className="absolute inset-0 grid place-items-center bg-[var(--bg)]">
       <div className="w-72 max-w-[85vw]">
         <div className="display text-[20px]">
-          Namma<span className="text-[var(--route)]">/</span>Space
+          Door<span className="text-[var(--route)]">/</span>way
         </div>
         <div className="mt-4 flex justify-between text-[12px] text-[var(--muted)]">
           <span>{loading.label}</span>

@@ -1,7 +1,7 @@
-# ◈ NAMMA SPACE
+# ◈ DOORWAY
 
 <p align="center">
-  <img src="docs/assets/hero.jpg" alt="The hostel room scan seen from above in the Namma Space viewer" width="100%" />
+  <img src="docs/assets/hero.jpg" alt="The hostel room scan seen from above in the Doorway viewer" width="100%" />
 </p>
 
 <p align="center">
@@ -50,13 +50,13 @@
 
 What if you could walk through a building before ever setting foot inside it?
 
-**Namma Space** is an attempt to bridge the physical and digital worlds by transforming ordinary smartphone captures of indoor environments into photorealistic, interactive 3D digital twins.
+**Doorway** is an attempt to bridge the physical and digital worlds by transforming ordinary smartphone captures of indoor environments into photorealistic, interactive 3D digital twins.
 
-Instead of relying on expensive scanning hardware or specialized equipment, Namma Space aims to make spatial digitization accessible through everyday phones.
+Instead of relying on expensive scanning hardware or specialized equipment, Doorway aims to make spatial digitization accessible through everyday phones.
 
 The reconstructed environments can be explored directly in a browser, navigated using intuitive movement controls, and eventually used for on-site augmented reality guidance.
 
-Built for **Namma Space — Techfest 2026–27, IIT Bombay**.
+Built for the **Namma Space** challenge at **Techfest 2026–27, IIT Bombay**.
 
 ### The idea
 
@@ -139,7 +139,7 @@ All screenshots are frames from the running viewer.
 
 ## ⚙ How It Works
 
-Namma Space uses two complementary representations of the same physical environment.
+Doorway uses two complementary representations of the same physical environment.
 
 **One representation for visual fidelity. Another for physical interaction.**
 
@@ -234,7 +234,7 @@ flowchart TB
 ### Project Structure
 
 ```text
-namma-space/
+doorway/
 │
 ├── src/
 │   ├── App.tsx
@@ -354,7 +354,7 @@ and open `http://localhost:4173/`.
 
 ## 🏗 Add Your Own Venue
 
-Namma Space is designed around a reusable venue system.
+Doorway is designed around a reusable venue system.
 
 A new environment should be deployable by adding its assets and configuration rather than rewriting application code.
 
@@ -466,7 +466,7 @@ Built with curiosity, experimentation, and a shared ambition to make physical sp
 | **Harshit** | Scanning workflows and 3D model development |
 
 <p align="center">
-  <strong>Built for Namma Space · Techfest 2026–27 · IIT Bombay</strong>
+  <strong>Built for the Namma Space challenge · Techfest 2026–27 · IIT Bombay</strong>
   <br />
   <sub>From a smartphone capture to a world you can walk through.</sub>
 </p>
@@ -484,7 +484,7 @@ Built with curiosity, experimentation, and a shared ambition to make physical sp
 
 ## 🌍 Landing Website
 
-The repository also includes the Namma Space landing site in [`landing/`](landing/). It contains the Earth-backed Three.js intro and transitions into the viewer above.
+The repository also includes the Doorway landing site in [`landing/`](landing/). It contains the Earth-backed Three.js intro and transitions into the viewer above.
 
 ```bash
 cd landing
