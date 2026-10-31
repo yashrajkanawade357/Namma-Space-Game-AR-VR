@@ -1,8 +1,18 @@
 node_modules
+landing/node_modules
 dist
 .vite
 captures
-# Raw scan exports stay local; only the cleaned room.glb and venue.json are deployed.
+.env
+.env.*
+# Rebuilt on Vercel from the viewer source.
+landing/experience
+# Local-only scans and scratch folders: never deployed.
+New folder
+public/venues/room
+public/venues/hostel-points
+public/venues/scan2
+# Raw scan exports stay local; only cleaned venue files are deployed.
 public/venues/*/model.glb
 public/venues/*/*.jpg
 public/venues/*/*.png
