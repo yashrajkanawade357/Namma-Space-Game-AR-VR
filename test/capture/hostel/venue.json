@@ -1,0 +1,14 @@
+{
+  "id": "hostel-test",
+  "name": "Hostel room (rebuilt from test data)",
+  "subtitle": "Scaniverse scan, 5.0 m × 4.9 m",
+  "collider": {
+    "url": "hostel.glb",
+    "position": [0.08, 0, -0.006],
+    "rotation": [0, 0, 0],
+    "scale": 1
+  },
+  "spawn": { "position": [0, 0, 0.7], "yaw": 0 },
+  "eyeHeight": 1.6,
+  "credits": ["Scaniverse capture by Harshit"]
+}

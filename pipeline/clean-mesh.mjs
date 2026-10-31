@@ -5,7 +5,8 @@
 //
 // Usage: node pipeline/clean-mesh.mjs <input.glb> <output.glb> [--triangles 120000] [--texture 2048] [--debris 0.005]
 // --debris: drop disconnected pieces smaller than this share of all triangles (0 keeps everything).
-import { statSync } from "node:fs";
+import { mkdirSync, statSync } from "node:fs";
+import { dirname } from "node:path";
 import { NodeIO } from "@gltf-transform/core";
 import { ALL_EXTENSIONS } from "@gltf-transform/extensions";
 import { compactPrimitive, dedup, prune, simplify, textureCompress, weld } from "@gltf-transform/functions";
@@ -110,5 +111,6 @@ await doc.transform(
   prune(),
 );
 
+mkdirSync(dirname(output), { recursive: true });
 await io.write(output, doc);
 console.log(`Output ${output}: ${countTriangles(doc).toLocaleString()} triangles (${mb(output)} MB)`);

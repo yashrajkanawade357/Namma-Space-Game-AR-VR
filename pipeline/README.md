@@ -45,7 +45,7 @@ public/venues/<venue>/     what gets deployed
    npm run check:venue -- public/venues/home
    ```
 
-7. **Open** `http://localhost:5173/?venue=home`.
+7. **Open** `http://localhost:5173/experience/?venue=home`.
 
 For deployment, large files can live on Cloudflare R2 instead of the repo: upload the folder and set
 `VITE_VENUE_BASE` to the bucket's public URL.

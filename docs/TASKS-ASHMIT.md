@@ -19,9 +19,9 @@ Open these to see what already works:
 
 | URL | What it is |
 | --- | --- |
-| `http://localhost:5173/` | Demo flat: WASD walking, collision, minimap, settings |
-| `http://localhost:5173/?venue=sample` | Small test mesh from `test/venues/sample` |
-| `http://localhost:5173/align.html?venue=<id>` | Alignment tool for a raw scan (rotate, level, measure, prints the venue.json transform) |
+| `http://localhost:5173/experience/` | Demo flat: WASD walking, collision, minimap, settings |
+| `http://localhost:5173/experience/?venue=sample` | Small test mesh from `test/venues/sample` |
+| `http://localhost:5173/experience/align.html?venue=<id>` | Alignment tool for a raw scan (rotate, level, measure, prints the venue.json transform) |
 
 Read first: [`README.md`](../README.md) and [`pipeline/README.md`](../pipeline/README.md).
 How a venue works: each space is a folder `public/venues/<id>/` with `venue.json` plus its files.

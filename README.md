@@ -1,7 +1,13 @@
 # ◈ NAMMA SPACE
 
 <p align="center">
-  <img src="docs/assets/namma-space-banner.svg" alt="Namma Space — Digital Spaces, Reimagined" width="100%" />
+  <img src="docs/assets/hero.jpg" alt="The hostel room scan seen from above in the Namma Space viewer" width="100%" />
+</p>
+
+<p align="center">
+  <strong>Live:</strong> <a href="https://namma-space-three.vercel.app">namma-space-three.vercel.app</a>
+  &nbsp;·&nbsp;
+  <strong>Walk the scan directly:</strong> <a href="https://namma-space-three.vercel.app/experience/">/experience/</a>
 </p>
 
 <p align="center">
@@ -30,13 +36,12 @@
 
 ---
 
-<!-- Replace with an actual screen recording converted to GIF -->
 <p align="center">
-  <img src="docs/assets/demo-walkthrough.gif" width="90%" alt="Namma Space interactive 3D walkthrough" />
+  <img src="docs/assets/scan-to-room.gif" width="90%" alt="The raw point cloud of the hostel room turning into the textured mesh" />
 </p>
 
 <p align="center">
-  <sub>Explore real spaces through an interactive digital twin — right from your browser.</sub>
+  <sub>One phone scan of a hostel room: the raw point cloud becomes the textured room you can walk through.</sub>
 </p>
 
 ---
@@ -66,11 +71,12 @@ Built for **Namma Space — Techfest 2026–27, IIT Bombay**.
 
 ### 01 — Photorealistic Reconstruction
 
-Transform smartphone captures into Gaussian Splat representations of indoor environments.
+Turn a smartphone scan (Scaniverse) into a walkable 3D twin, with no manual modelling.
 
-- Photorealistic spatial representation.
-- Gaussian Splat rendering using [Spark](https://sparkjs.dev).
-- Compressed `.spz` assets for deployment.
+- Textured scan meshes shown with their captured lighting (the live hostel room and classroom).
+- Gaussian splats rendered with [Spark](https://sparkjs.dev) when a good splat is available (`?venue=katpadi`).
+- Coloured point clouds turned into venues automatically, collision included (`pipeline/points-to-venue.mjs`).
+- `pipeline/clean-mesh.mjs` removes floating debris and shrinks scans for the web (4K texture for phones, 8K for desktops).
 - Real-world environments instead of manually modelled scenes.
 
 ### 02 — First-Person Exploration
@@ -88,9 +94,9 @@ Step inside reconstructed environments.
 
 Understand the environment while exploring it.
 
-- Real-time minimap.
-- Floor-plan representation generated from scan geometry.
-- Player position tracking.
+- Opening fly-through: the whole space from above, then down to eye level.
+- Overview mode (**V**): orbit the whole space, with the visitor's position marked.
+- Real-time minimap, sliced from the scan geometry.
 - Configurable movement and viewing settings.
 
 ### 04 — Venue-Based Architecture
@@ -114,20 +120,20 @@ Every reconstructed space is treated as independent data.
 ## ◈ See It In Action
 
 <p align="center">
-  <img src="docs/assets/viewer-preview.png" width="85%" alt="Namma Space 3D viewer" />
+  <img src="docs/assets/viewer-preview.jpg" width="85%" alt="First-person view inside the scanned hostel room" />
   <br />
-  <sub>01 / Interactive 3D Environment</sub>
+  <sub>01 / First person inside the scanned hostel room</sub>
 </p>
 
 <p align="center">
-  <img src="docs/assets/minimap-preview.png" width="42%" alt="Namma Space minimap" />
+  <img src="docs/assets/overview-preview.jpg" width="56%" alt="Overview mode showing the whole room from above" />
   &nbsp;
-  <img src="docs/assets/controls-preview.png" width="42%" alt="Namma Space controls" />
+  <img src="docs/assets/minimap-preview.jpg" width="28%" alt="Minimap sliced from the scan" />
   <br />
-  <sub>02 / Spatial Minimap &nbsp;&nbsp; 03 / Movement Interface</sub>
+  <sub>02 / Overview mode (V) &nbsp;&nbsp; 03 / Minimap sliced from the scan</sub>
 </p>
 
-> **Media note:** Replace these image paths with actual screenshots from the running application. A 10–20 second walkthrough GIF or short WebM recording is the best hero asset.
+All screenshots are frames from the running viewer.
 
 ---
 
@@ -160,18 +166,18 @@ flowchart TD
 
 | Layer | Technology | Responsibility |
 |---|---|---|
-| Visual layer | Gaussian Splats | Photorealistic rendering |
-| Geometry layer | GLB Mesh | Collision and navigation |
+| Visual layer | Textured scan mesh (default), Gaussian splat or point cloud | Photorealistic rendering |
+| Geometry layer | GLB Mesh | Collision, floor plan and navigation |
 | Acceleration | BVH | Efficient spatial queries |
 | Application | Three.js / R3F | Interactive 3D environment |
 | State | Zustand | Application state management |
 | Venue system | JSON | Environment configuration |
 
-### Why Gaussian Splats + Mesh?
+### Why a separate visual layer and collision mesh?
 
-**Gaussian Splats — For Looks**
+**Visual layer — For Looks**
 
-Gaussian Splatting preserves the appearance of captured environments with impressive visual fidelity. Namma Space uses Spark to render these representations in the browser.
+The visitor sees the scan as captured. For the live hostel room and classroom this is the textured mesh shown with its baked-in lighting, which looked sharpest at eye level for our captures. Gaussian splats (rendered with Spark) and coloured point clouds plug into the same slot when a capture provides them.
 
 **Collision Mesh — For Walking**
 
@@ -234,40 +240,25 @@ namma-space/
 │   ├── App.tsx
 │   │
 │   ├── scene/
-│   │   ├── VenueScene.tsx
-│   │   ├── Player.tsx
-│   │   ├── collider.ts
-│   │   └── demoLayout.ts
-│   │
-│   ├── ui/
-│   │   ├── TopBar
-│   │   ├── Settings
-│   │   ├── ControlsOverlay
-│   │   ├── Minimap
-│   │   └── Joystick
-│   │
-│   └── venue/
-│       └── venue.json types and loading
+│   │   ├── VenueScene.tsx       loads the visual layer + collision mesh
+│   │   ├── Player.tsx           first-person capsule walker
+│   │   ├── CameraDirector.tsx   opening fly-through and overview mode
+│   │   ├── collider.ts          BVH collider and minimap slicing
+│   │   └── demoLayout.ts        procedural development layout
+│   ├── align/                   alignment tool (align.html)
+│   ├── ui/                      top bar, settings, controls, minimap, joystick
+│   └── venue/                   venue.json types and loading
 │
-├── public/
-│   └── venues/
-│       └── <venue-id>/
-│           ├── venue.json
-│           ├── scene.spz
-│           └── collider.glb
+├── public/venues/<venue-id>/    venue.json + cleaned scan files
+│   ├── hostel/                  default venue (live)
+│   ├── classroom/
+│   └── katpadi/                 splat example
 │
-├── pipeline/
-│   ├── README.md
-│   └── capture-to-venue scripts
-│
-├── test/
-│   └── venues/
-│       └── sample/
-│
-├── docs/
-│   ├── SOP.md
-│   └── assets/
-│
+├── pipeline/                    clean-mesh, points-to-venue, compress-splat, check-venue
+├── test/                        real sample capture + rebuild steps, and a synthetic test room
+├── landing/                     landing site; the viewer is served at /experience/
+├── docs/                        SOP.md, task lists, README images
+├── vercel.json                  deployment
 ├── package.json
 └── README.md
 ```
@@ -313,21 +304,31 @@ npm install
 npm run dev
 ```
 
-**5. Open the application**
+**5. Open the viewer**
 
 ```text
-http://localhost:5173/
+http://localhost:5173/experience/
 ```
+
+The viewer lives under `/experience/` because the landing site serves it there. To run the whole site
+(landing page + viewer, production build) instead:
+
+```bash
+cd landing && npm install && npm start
+```
+
+and open `http://localhost:4173/`.
 
 ### Available Environments
 
-| URL | Description |
+| URL (after `/experience/`) | Description |
 |---|---|
-| `/` | Procedural demo environment |
-| `/?venue=sample` | Sample reconstructed environment |
-| `/?venue=<id>` | Load a specific venue |
-
-> The procedural demo is intended for development and is labelled as a demo environment.
+| *(none)* | **Hostel room**: Scaniverse scan, the default venue |
+| `?venue=classroom` | Classroom: a second Scaniverse scan, 9.6 m × 9.2 m |
+| `?venue=katpadi` | The same capture shown as a Gaussian splat |
+| `?venue=demo` | Procedural demo layout for development (labelled as a demo) |
+| `?venue=sample` | Synthetic test room from `test/venues/sample` |
+| `?venue=<id>` | Any folder in `public/venues/<id>/` |
 
 ---
 
@@ -342,6 +343,8 @@ http://localhost:5173/
 | Look around | Mouse | Touch drag |
 | Move faster | `Shift` | — |
 | Return to start | `R` | — |
+| Overview of the whole space | `V` | Layers button |
+| Skip the opening fly-through | Any key or click | Tap |
 | Show controls | `H` | On-screen UI |
 | Release mouse | `Esc` | — |
 
@@ -369,21 +372,16 @@ Process your capture using the pipeline documentation:
 
 ### Step 3 — Generate Assets
 
-Convert the reconstructed point cloud into a compressed Gaussian Splat:
+Clean the Scaniverse mesh export (welds, removes floating debris, resizes the texture):
 
 ```bash
-pipeline/compress-splat.sh \
-  captures/home/scan.ply \
-  public/venues/home/scene.spz
+node pipeline/clean-mesh.mjs captures/home/scan.glb public/venues/home/home.glb --triangles 200000 --texture 4096
 ```
 
-Export the corresponding decimated collision mesh as:
-
-```text
-public/venues/home/collider.glb
-```
-
-Create the corresponding `venue.json` configuration.
+Then write `public/venues/home/venue.json` and line the model up with the alignment tool at
+`http://localhost:5173/experience/align.html?venue=home` (level, scale, copy the transform).
+Only have a point cloud? `node pipeline/points-to-venue.mjs scan.ply public/venues/home --z-up` builds the whole
+venue, collision included. A full worked example with a real capture is in [`test/README.md`](test/README.md).
 
 ### Step 4 — Validate
 
@@ -394,7 +392,7 @@ npm run check:venue -- public/venues/home
 ### Step 5 — Explore
 
 ```text
-http://localhost:5173/?venue=home
+http://localhost:5173/experience/?venue=home
 ```
 
 ---
@@ -406,14 +404,15 @@ The project is being developed in three stages.
 ### Round 01 — Digital Reconstruction
 
 - [x] React + Three.js application foundation
-- [x] Gaussian Splat rendering integration
-- [x] Venue-based asset architecture
-- [x] Procedural development environment
-- [x] First-person movement system
-- [x] BVH-based collision architecture
-- [x] Minimap and mobile controls
-- [ ] Final capture and reconstruction pipeline validation
-- [ ] Final demonstration environment
+- [x] Venue-based asset architecture (`venue.json` per space)
+- [x] Gaussian splat, textured mesh and point-cloud visual layers
+- [x] First-person movement (WASD + mouse, touch joystick)
+- [x] BVH-based collision against the scan mesh
+- [x] Minimap sliced from the scan, opening fly-through, overview mode (V)
+- [x] Capture SOP ([`docs/SOP.md`](docs/SOP.md))
+- [x] Capture-to-venue pipeline: `clean-mesh.mjs`, `points-to-venue.mjs`, alignment tool, `check:venue`
+- [x] Real captured venues: hostel room (default) and classroom
+- [x] Live deployment with landing page: [namma-space-three.vercel.app](https://namma-space-three.vercel.app)
 
 ### Round 02 — Intelligent Navigation
 
@@ -450,9 +449,9 @@ The project is being developed in three stages.
 | Collision Detection | three-mesh-bvh |
 | State Management | Zustand |
 | Styling | Tailwind CSS |
-| Spatial Assets | Gaussian Splats, GLB |
-| Capture | Scaniverse, Polycam |
-| Reconstruction & Processing | Blender, CloudCompare, SuperSplat |
+| Spatial Assets | Textured GLB meshes, Gaussian splats (.spz / .ply), point clouds (.ply) |
+| Capture | Scaniverse (used for both live venues); Polycam as an alternative |
+| Reconstruction & Processing | Scaniverse exports, gltf-transform + meshoptimizer (`clean-mesh.mjs`), our alignment tool |
 
 ---
 

@@ -17,3 +17,7 @@ public/venues/*/model.glb
 public/venues/*/*.jpg
 public/venues/*/*.png
 public/venues/*/*.ply
+# Repo-only material, not part of the site.
+test/capture
+docs/assets
+brag-output
