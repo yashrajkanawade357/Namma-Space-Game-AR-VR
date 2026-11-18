@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main, round-2]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Type-check (app and tests)
+        run: npm run typecheck
+      - name: Tests (pathfinding on the demo flat and the real scans, guidance, search)
+        run: npm test
+      - name: Validate every committed venue
+        run: for v in public/venues/*/; do npm run -s check:venue -- "$v"; done
+      - name: Build
+        run: npm run build

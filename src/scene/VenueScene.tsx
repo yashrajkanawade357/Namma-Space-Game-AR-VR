@@ -5,12 +5,19 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { PLYLoader } from "three/examples/jsm/loaders/PLYLoader.js";
 import { SparkRenderer, SplatMesh } from "@sparkjsdev/spark";
 import { isTouchDevice, useApp } from "../store";
-import type { Vec3, VenueConfig } from "../venue/types";
-import { buildCollider, sliceCollider, type FloorSlice } from "./collider";
+import { floorPatches, type Vec3, type VenueConfig } from "../venue/types";
+import { buildCollider, KEEP, sliceCollider, type FloorSlice } from "./collider";
 import { buildDemoLayout } from "./demoLayout";
 import { Player } from "./Player";
 import { CameraDirector } from "./CameraDirector";
 import { ScanGrade } from "./ScanGrade";
+import { buildNavWorldFromCollider } from "../nav/navmesh";
+import { setNavWorld } from "../nav/runtime";
+import { NavLayer } from "../nav/NavLayer";
+import { loadPois } from "../poi/loadPois";
+import { PoiLayer } from "../poi/PoiLayer";
+import { PoiEditorScene } from "../poi/PoiEditor";
+import { loadDraft } from "../poi/editorStore";
 
 const deg = (v?: Vec3) => (v ? new THREE.Euler(...v.map(THREE.MathUtils.degToRad) as Vec3) : new THREE.Euler());
 
@@ -91,6 +98,7 @@ export function VenueScene({ venue, onSlice }: { venue: VenueConfig; onSlice: (s
   const gl = useThree((s) => s.gl);
   const showCollider = useApp((s) => s.showCollider);
   const quality = useApp((s) => s.quality);
+  const editMode = useApp((s) => s.editMode);
   const [world, setWorld] = useState<{ visual: THREE.Object3D | null; collider: THREE.Mesh } | null>(null);
   const spark = useMemo(() => new SparkRenderer({ renderer: gl }), [gl]);
 
@@ -130,25 +138,39 @@ export function VenueScene({ venue, onSlice }: { venue: VenueConfig; onSlice: (s
 
         const pointsTask = venue.points ? loadPoints(venue.points) : Promise.resolve(null);
         const [source, , points] = await Promise.all([meshTask, splatTask, pointsTask]);
-        if (venue.walkableFloor) {
-          const [width, depth] = venue.walkableFloor.size;
-          const floor = new THREE.Mesh(
-            new THREE.BoxGeometry(width, 0.1, depth),
-            new THREE.MeshBasicMaterial({ visible: false }),
-          );
-          floor.name = "walkable-floor-collision";
-          floor.position.set(...venue.walkableFloor.position);
-          source.add(floor);
-        }
         place(source, venue.collider);
-        const collider = buildCollider(source);
+        // Collision is built in venue coordinates: the placed scan, plus the optional floor patch.
+        const physics = new THREE.Group();
+        physics.add(source);
+        for (const patch of floorPatches(venue)) {
+          const [width, depth] = patch.size;
+          const floor = new THREE.Mesh(new THREE.BoxGeometry(width, 0.1, depth), new THREE.MeshBasicMaterial({ visible: false }));
+          floor.name = "walkable-floor-collision";
+          floor.userData[KEEP] = true;
+          floor.position.set(...patch.position);
+          physics.add(floor);
+        }
+        const collider = buildCollider(physics, venue.cleanup);
+        physics.remove(source);
         progress.mesh = 1;
         if (cancelled) return;
 
         onSlice(sliceCollider(collider));
+        // The walkable area for routing comes from the same collision mesh, so routes and walking agree.
+        set({ loading: { label: "Mapping the walkable floor", progress: 0.97 } });
+        const [nav, pois] = await Promise.all([
+          buildNavWorldFromCollider(collider).catch((err: Error) => {
+            console.warn(err.message);
+            return null;
+          }),
+          loadPois(venue.id),
+        ]);
+        if (cancelled) return;
+        setNavWorld(nav);
         // With a splat or point cloud, the mesh stays hidden and only drives physics; otherwise it is the view.
         setWorld({ visual: splat ?? points ?? source, collider });
-        set({ loading: null });
+        // The editor picks up where it left off in this browser.
+        set({ loading: null, pois: (useApp.getState().editMode && loadDraft(venue.id)) || pois });
       } catch (err) {
         if (!cancelled) set({ loading: null, error: err instanceof Error ? err.message : String(err) });
       }
@@ -156,6 +178,7 @@ export function VenueScene({ venue, onSlice }: { venue: VenueConfig; onSlice: (s
 
     return () => {
       cancelled = true;
+      setNavWorld(null);
     };
   }, [venue, onSlice, gl]);
 
@@ -184,6 +207,9 @@ export function VenueScene({ venue, onSlice }: { venue: VenueConfig; onSlice: (s
       {world && <Player venue={venue} collider={world.collider} />}
       {world && <CameraDirector bounds={world.collider.geometry.boundingBox!} />}
       {world && isBaked(venue) && !venue.splat && quality !== "low" && <ScanGrade />}
+      {world && <NavLayer />}
+      {world && <PoiLayer collider={world.collider} />}
+      {world && editMode && <PoiEditorScene collider={world.collider} />}
     </>
   );
 }

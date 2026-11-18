@@ -1,5 +1,23 @@
 export type Vec3 = [number, number, number];
 
+export interface FloorPatch {
+  /** Center of the floor patch in venue coordinates (its top sits 5 cm above this point). */
+  position: Vec3;
+  /** Width and depth in metres. */
+  size: [number, number];
+}
+
+/** All floor patches of a venue as a list. */
+export const floorPatches = (v: { walkableFloor?: FloorPatch | FloorPatch[] }): FloorPatch[] =>
+  v.walkableFloor ? ([] as FloorPatch[]).concat(v.walkableFloor) : [];
+
+export interface CleanupZone {
+  /** Floor outline as [x, z] corners, venue coordinates. */
+  zone: [number, number][];
+  /** Triangles entirely below this height (metres) inside the outline are dropped. */
+  below: number;
+}
+
 /**
  * One captured space. Everything about a venue lives in data, so mapping a new
  * building means producing a new venues/<id>/ folder, not changing code.
@@ -47,13 +65,13 @@ export interface VenueConfig {
     rotation?: Vec3;
     scale?: number;
   };
-  /** Optional hidden floor patch for scans whose mesh has gaps underfoot. */
-  walkableFloor?: {
-    /** Center of the floor patch in venue coordinates. */
-    position: Vec3;
-    /** Width and depth in metres. */
-    size: [number, number];
-  };
+  /** Optional hidden floor patches for scans whose mesh has gaps underfoot (one, or a list). */
+  walkableFloor?: FloorPatch | FloorPatch[];
+  /**
+   * Scan artifacts to ignore for walking and routing, e.g. a hump in a shiny floor or a bag left
+   * in an aisle. The visible scan is unchanged. Pair with walkableFloor if the artifact was the floor.
+   */
+  cleanup?: CleanupZone[];
   spawn: {
     position: Vec3;
     /** Facing direction in degrees, 0 = looking towards -Z. */

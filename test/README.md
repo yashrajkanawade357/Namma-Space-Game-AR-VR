@@ -18,6 +18,7 @@ the browser steps.
 | `scan.glb` | Scaniverse textured mesh: 196,646 triangles, 8192 × 8192 texture, Y-up, metres | 12.5 MB |
 | `points.ply` | Scaniverse coloured point cloud: 261,418 points (x y z + red green blue), Z-up | 3.9 MB |
 | `venue.json` | The venue settings we use for this room (alignment transform and start point) | — |
+| `pois.json` | The tagged places (beds, desks, the room itself) used for search and navigation | — |
 
 **1. Clean the mesh** (welds vertices, removes floating debris, sizes the texture for the web):
 
@@ -27,10 +28,10 @@ node pipeline/clean-mesh.mjs test/capture/hostel/scan.glb public/venues/hostel-t
 
 Expected: `Debris removed 150 floating triangles`, output 196,496 triangles, 5.9 MB.
 
-**2. Add the venue settings:**
+**2. Add the venue settings and its places:**
 
 ```bash
-cp test/capture/hostel/venue.json public/venues/hostel-test/venue.json
+cp test/capture/hostel/venue.json test/capture/hostel/pois.json public/venues/hostel-test/
 ```
 
 The transform in it came from the alignment tool. To redo it yourself, open
@@ -43,7 +44,14 @@ Y-up in metres), so it only centres the room.
 npm run check:venue -- public/venues/hostel-test
 ```
 
-**4. Walk it:** open `http://localhost:5173/experience/?venue=hostel-test`.
+**4. Walk it:** open `http://localhost:5173/experience/?venue=hostel-test`. Press **Ctrl K**, type `desk 2`,
+press Enter: the route is drawn on the floor; press **G** to be walked there.
+
+**5. Run the automated checks** (pathfinding on the demo flat and on the real scans, search, POI validation):
+
+```bash
+npm test
+```
 
 ### Alternative: build it from the point cloud only
 

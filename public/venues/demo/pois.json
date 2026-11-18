@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "pois": [
+    {
+      "id": "front-door",
+      "name": "Front door",
+      "category": "exit",
+      "aliases": ["entrance", "main door", "exit"],
+      "position": [3.9, 0, 3.7]
+    },
+    {
+      "id": "living-room",
+      "name": "Living room",
+      "category": "room",
+      "aliases": ["hall", "lounge", "drawing room"],
+      "description": "Sofas, TV and the dining table",
+      "position": [-0.6, 0, 2.2],
+      "zone": [[-5, 0.6], [1, 0.6], [1, -0.2], [5, -0.2], [5, 4], [-5, 4]]
+    },
+    {
+      "id": "bedroom",
+      "name": "Bedroom",
+      "category": "room",
+      "aliases": ["bed room", "sleeping room"],
+      "position": [-2.2, 0, -1.6],
+      "zone": [[-5, -4], [1, -4], [1, 0.6], [-5, 0.6]]
+    },
+    {
+      "id": "kitchen",
+      "name": "Kitchen",
+      "category": "room",
+      "aliases": ["cooking", "pantry"],
+      "position": [3.0, 0, -1.8],
+      "zone": [[1, -4], [5, -4], [5, -0.2], [1, -0.2]]
+    },
+    {
+      "id": "three-seater-sofa",
+      "name": "3-seater sofa",
+      "category": "seating",
+      "aliases": ["couch", "settee", "sofa"],
+      "position": [-2.6, 0.45, 3.3]
+    },
+    {
+      "id": "corner-sofa",
+      "name": "Corner sofa",
+      "category": "seating",
+      "aliases": ["couch", "armchair"],
+      "position": [-4.3, 0.45, 2.4]
+    },
+    {
+      "id": "tv",
+      "name": "TV",
+      "category": "item",
+      "aliases": ["television", "screen"],
+      "position": [-3.4, 0.9, 0.85]
+    },
+    {
+      "id": "dining-table",
+      "name": "Dining table",
+      "category": "desk",
+      "aliases": ["table", "eating"],
+      "description": "Seats four",
+      "position": [1.8, 0.75, 2.6]
+    },
+    {
+      "id": "fridge",
+      "name": "Fridge",
+      "category": "facility",
+      "aliases": ["refrigerator", "cold drinks", "water"],
+      "position": [1.45, 1.0, -3.6]
+    },
+    {
+      "id": "kitchen-counter",
+      "name": "Kitchen counter",
+      "category": "facility",
+      "aliases": ["sink", "stove", "cooking"],
+      "position": [3.4, 0.9, -3.65]
+    },
+    {
+      "id": "bed",
+      "name": "Bed",
+      "category": "item",
+      "aliases": ["cot", "sleep"],
+      "position": [-3.6, 0.5, -2.4]
+    },
+    {
+      "id": "wardrobe",
+      "name": "Wardrobe",
+      "category": "storage",
+      "aliases": ["cupboard", "almirah", "closet"],
+      "position": [0.6, 1.0, -2.6]
+    }
+  ]
+}

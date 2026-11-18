@@ -8,6 +8,9 @@ import { SCAN_SKY, VenueScene } from "./scene/VenueScene";
 import type { FloorSlice } from "./scene/collider";
 import { Minimap } from "./ui/Minimap";
 import { ErrorScreen, Fps, HelpOverlay, Joystick, LoadingScreen, SettingsPanel, TopBar, WalkHint } from "./ui/Hud";
+import { NavPanel, NavShortcuts, PoiCard, SearchButton, SearchPalette } from "./ui/NavUi";
+import { PoiEditorPanel } from "./ui/PoiEditorPanel";
+import { useDeepLink } from "./nav/useDeepLink";
 
 export default function App() {
   const [venue, setVenue] = useState<VenueConfig | null>(null);
@@ -15,6 +18,8 @@ export default function App() {
   const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
   const quality = useApp((s) => s.quality);
   const view = useApp((s) => s.view);
+  const pois = useApp((s) => s.pois.length);
+  useDeepLink();
 
   useEffect(() => {
     loadVenue(venueIdFromUrl())
@@ -50,21 +55,31 @@ export default function App() {
       )}
 
       {venue && (
-        <div className="hud pointer-events-none absolute inset-0 flex flex-col">
+        <div className="hud pointer-events-none absolute inset-0 z-20 flex flex-col">
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1 sm:flex-none">
+            <div className="flex min-w-0 flex-1 flex-wrap items-start gap-2 sm:flex-none">
               <TopBar venue={venue} isDemo={isDemo} />
+              {pois > 0 && <SearchButton />}
             </div>
             <div className="hidden sm:block">
               <Minimap slice={slice} />
             </div>
           </div>
-          <div className="mt-3 flex justify-end">
-            <SettingsPanel />
+          <div className="mt-3 flex items-start justify-between gap-3">
+            <PoiEditorPanel />
+            <div className="ml-auto">
+              <SettingsPanel />
+            </div>
           </div>
-          <div className="mt-auto flex items-end justify-between gap-3">
-            <Joystick />
-            <div className="flex items-center gap-2">
+          <div className="mt-auto flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex items-end gap-3">
+              <Joystick />
+              <PoiCard />
+            </div>
+            <div className="sm:absolute sm:bottom-3 sm:left-1/2 sm:-translate-x-1/2">
+              <NavPanel />
+            </div>
+            <div className="hidden items-center gap-2 sm:flex">
               <WalkHint />
               <Fps />
             </div>
@@ -76,6 +91,8 @@ export default function App() {
       )}
 
       {venue && <HelpOverlay canvas={canvas} venue={venue} />}
+      {venue && <SearchPalette />}
+      {venue && <NavShortcuts />}
       <LoadingScreen />
       <ErrorScreen />
     </div>

@@ -1,13 +1,19 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { MeshBVH } from "three-mesh-bvh";
+import type { CleanupZone } from "../venue/types";
+import { dropArtifacts } from "./cleanup";
+
+/** Marks a mesh added by the venue (a floor patch) rather than scanned, so cleanup zones leave it alone. */
+export const KEEP = "keepInCollider";
 
 /**
  * Flattens every mesh under `root` into one world-space, position-only geometry
  * and builds a BVH over it. The result is what the player collides with and what
  * the minimap slices, regardless of whether it came from a scan or the demo.
+ * Cleanup zones drop scan artifacts; meshes flagged with userData[KEEP] are never dropped.
  */
-export function buildCollider(root: THREE.Object3D): THREE.Mesh {
+export function buildCollider(root: THREE.Object3D, cleanup?: CleanupZone[]): THREE.Mesh {
   root.updateMatrixWorld(true);
   const parts: THREE.BufferGeometry[] = [];
   root.traverse((obj) => {
@@ -16,6 +22,12 @@ export function buildCollider(root: THREE.Object3D): THREE.Mesh {
     const g = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone();
     for (const name of Object.keys(g.attributes)) if (name !== "position") g.deleteAttribute(name);
     g.applyMatrix4(mesh.matrixWorld);
+    // Scan artifacts the venue marks for removal stop blocking walking and routing.
+    if (!mesh.userData[KEEP]) {
+      const pos = g.attributes.position.array as Float32Array;
+      const cleaned = dropArtifacts(pos, cleanup);
+      if (cleaned !== pos) g.setAttribute("position", new THREE.BufferAttribute(cleaned, 3));
+    }
     parts.push(g);
   });
   if (!parts.length) throw new Error("The collision mesh has no geometry.");

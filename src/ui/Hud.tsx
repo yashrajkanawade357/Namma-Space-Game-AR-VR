@@ -60,7 +60,7 @@ function IconButton({ label, onClick, pressed, children }: { label: string; onCl
 }
 
 export function SettingsPanel() {
-  const { speed, quality, showCollider, settingsOpen, set } = useApp();
+  const { speed, quality, showCollider, showNavmesh, showLabels, navReady, settingsOpen, set } = useApp();
   if (!settingsOpen) return null;
   return (
     <section className="panel pointer-events-auto w-64 p-4" aria-label="Settings">
@@ -90,6 +90,17 @@ export function SettingsPanel() {
         </span>
         <input id="collider" type="checkbox" checked={showCollider} onChange={(e) => set({ showCollider: e.target.checked })} className="h-4 w-4 accent-[var(--route)]" />
       </label>
+      <label htmlFor="navmesh" className="mt-3 flex items-center justify-between gap-3 text-[13px]">
+        <span>
+          Show walkable area
+          <span className="block text-[11px] text-[var(--muted)]">Where routes can go, kept 22 cm from obstacles</span>
+        </span>
+        <input id="navmesh" type="checkbox" checked={showNavmesh} disabled={!navReady} onChange={(e) => set({ showNavmesh: e.target.checked })} className="h-4 w-4 accent-[var(--route)]" />
+      </label>
+      <label htmlFor="labels" className="mt-3 flex items-center justify-between gap-3 text-[13px]">
+        <span>Show place labels</span>
+        <input id="labels" type="checkbox" checked={showLabels} onChange={(e) => set({ showLabels: e.target.checked })} className="h-4 w-4 accent-[var(--route)]" />
+      </label>
     </section>
   );
 }
@@ -109,13 +120,16 @@ export function HelpOverlay({ canvas, venue }: { canvas: HTMLCanvasElement | nul
         ["W A S D", "Walk"],
         ["Mouse", "Look around"],
         ["Shift", "Walk faster"],
+        ["Ctrl K", "Search for a place"],
+        ["Click", "Aim at a room or object to see its name"],
+        ["G", "Walk me there, while navigating"],
         ["R", "Back to the start"],
         ["V", "Overview of the whole space"],
         ["H", "Show these controls"],
         ["Esc", "Free the mouse"],
       ];
   return (
-    <div className="pointer-events-auto absolute inset-0 grid place-items-center bg-[var(--scrim)] p-4">
+    <div className="pointer-events-auto absolute inset-0 z-30 grid place-items-center bg-[var(--scrim)] p-4">
       <div className="panel w-full max-w-sm p-5">
         <p className="eyebrow">Free roam</p>
         <h2 className="display mt-1 text-[22px] leading-tight">Walk through {venue.name}</h2>
@@ -144,7 +158,7 @@ export function LoadingScreen() {
   if (!loading) return null;
   const pct = Math.round(loading.progress * 100);
   return (
-    <div className="absolute inset-0 grid place-items-center bg-[var(--bg)]">
+    <div className="absolute inset-0 z-40 grid place-items-center bg-[var(--bg)]">
       <div className="w-72 max-w-[85vw]">
         <div className="display text-[20px]">
           Door<span className="text-[var(--route)]">/</span>way
@@ -165,7 +179,7 @@ export function ErrorScreen() {
   const error = useApp((s) => s.error);
   if (!error) return null;
   return (
-    <div className="absolute inset-0 grid place-items-center bg-[var(--bg)] p-6">
+    <div className="absolute inset-0 z-40 grid place-items-center bg-[var(--bg)] p-6">
       <div className="panel max-w-md p-5">
         <h2 className="display text-[18px]">This venue didn't load</h2>
         <p className="mt-2 text-[13px] text-[var(--muted)]">{error}</p>

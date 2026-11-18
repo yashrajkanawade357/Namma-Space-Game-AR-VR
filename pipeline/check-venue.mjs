@@ -50,6 +50,47 @@ for (const [key, asset] of [["splat", venue.splat], ["collider", venue.collider]
   if (key === "collider" && size > 15) notes.push("collider: over 15 MB; decimate the mesh (about 50k triangles is plenty)");
 }
 
+// Floor patches and cleanup zones (scan repairs for walking and routing).
+const isCorners = (z) => Array.isArray(z) && z.length >= 3 && z.every((c) => Array.isArray(c) && c.length === 2 && c.every((n) => typeof n === "number"));
+const patches = venue.walkableFloor ? [].concat(venue.walkableFloor) : [];
+patches.forEach((p, i) => {
+  if (!isVec3(p?.position) || !Array.isArray(p?.size) || p.size.length !== 2) problems.push(`walkableFloor #${i + 1}: needs "position" [x, y, z] and "size" [width, depth].`);
+});
+(venue.cleanup ?? []).forEach((c, i) => {
+  if (!isCorners(c?.zone) || typeof c?.below !== "number") problems.push(`cleanup #${i + 1}: needs "zone" (three or more [x, z] corners) and "below" (metres).`);
+});
+if (patches.length || venue.cleanup?.length) notes.push(`scan repairs: ${patches.length} floor patch(es), ${venue.cleanup?.length ?? 0} cleanup zone(s)`);
+
+// Points of interest (optional): the same rules the viewer enforces when it loads pois.json.
+const CATEGORIES = ["room", "seating", "desk", "facility", "storage", "exit", "info", "item"];
+const poisPath = join(dir, "pois.json");
+if (existsSync(poisPath)) {
+  let file;
+  try {
+    file = JSON.parse(readFileSync(poisPath, "utf8"));
+  } catch (err) {
+    problems.push(`pois.json is not valid JSON: ${err.message}`);
+  }
+  if (file && !Array.isArray(file.pois)) problems.push('pois.json must look like { "version": 1, "pois": [ ... ] }.');
+  if (file && Array.isArray(file.pois)) {
+    const ids = new Set();
+    file.pois.forEach((p, i) => {
+      const where = `pois.json #${i + 1}${p?.name ? ` ("${p.name}")` : ""}`;
+      if (!p?.id || !/^[a-z0-9][a-z0-9-]*$/.test(p.id)) problems.push(`${where}: id must be a lowercase slug like "meeting-room-4".`);
+      else if (ids.has(p.id)) problems.push(`${where}: duplicate id "${p.id}".`);
+      ids.add(p?.id);
+      if (!p?.name?.trim()) problems.push(`${where}: name is missing.`);
+      if (!CATEGORIES.includes(p?.category)) problems.push(`${where}: category must be one of ${CATEGORIES.join(", ")}.`);
+      if (!isVec3(p?.position)) problems.push(`${where}: position must be [x, y, z] in metres.`);
+      if (p?.zone && !isCorners(p.zone)) problems.push(`${where}: zone must be three or more [x, z] corners.`);
+    });
+    const zones = file.pois.filter((p) => p?.zone).length;
+    notes.push(`pois: ${file.pois.length} places, ${zones} with a clickable zone`);
+  }
+} else {
+  notes.push("pois: none yet (tag them with ?edit=1, then save pois.json here)");
+}
+
 console.log(`Venue "${venue.name ?? "?"}" in ${dir}`);
 for (const n of notes) console.log(`  · ${n}`);
 if (problems.length) {

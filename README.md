@@ -108,12 +108,27 @@ Every reconstructed space is treated as independent data.
 - Reusable scene-loading architecture.
 - Add new environments without modifying application logic.
 
-### 05 — What's Coming Next
+### 05 — Places, Search and Navigation (Round 2)
 
-- Point-of-interest identification and labels.
-- Searchable indoor destinations.
-- Obstacle-aware navigation.
-- On-site augmented reality guidance.
+Find anything in the space and get walked to it, Google Maps style.
+
+- **Places (POIs)** float as labels in 3D: rooms, seating, desks, facilities, exits. Aim at a room or object and click
+  (or click it from the overview) to reveal its name; rooms light up on the floor.
+- **Search** with **Ctrl K**: fuzzy and typo-tolerant ("kitchn", "loo", "where is the TV?"), with the walking distance to
+  every result.
+- **Show the way**: the shortest walkable route, computed on a navigation mesh built from the scan itself, so it stays
+  on the floor and goes around walls and furniture. Animated chevrons on the floor, a beacon at the goal, turn-by-turn
+  instructions, distance and time left, recomputed as you walk.
+- **Transitions**: picking a place flies the camera up to show the whole route, then back down, turned to face the
+  way to go. **Jump there** arcs the camera over the walls and lands you facing the place.
+- **Walk me there** (**G**): the walker follows the route by itself, like a game character.
+- **Shareable directions**: the address bar carries `?poi=<id>`, so a link opens straight into navigation.
+- **Tagging editor** (`?edit=1`): click to place a POI, draw its room outline, name it, export `pois.json`.
+  Built for tagging a freshly scanned venue in minutes at the finale.
+
+### 06 — What's Coming Next
+
+- On-site augmented reality guidance (Round 3).
 
 ---
 
@@ -194,16 +209,44 @@ The same geometry also provides the basis for floor-plan slicing and future navi
 
 ---
 
+## 🧭 Navigation: how routes are computed
+
+```mermaid
+flowchart LR
+    SCAN["Scan collision mesh<br/>(same one you walk on)"] --> FIX["Scan repairs<br/>floor patches + cleanup zones"]
+    FIX --> NAV["Navigation mesh<br/>Recast, built in the browser<br/>(about 0.1 s)"]
+    POIS["pois.json<br/>names, categories, zones"] --> SNAP["Snap each place to the<br/>walkable floor beside it"]
+    NAV --> SNAP
+    SNAP --> PATH["Shortest path<br/>Detour: A* over floor polygons<br/>+ string pulling"]
+    PATH --> UI["Floor ribbon, beacon, minimap,<br/>turn-by-turn, auto-walk"]
+    PATH -->|"recomputed 5× a second<br/>from where you stand"| PATH
+```
+
+- **One source of truth.** The navigation mesh is built from the same collision mesh the walker collides with, and
+  the routing agent is the same size as the walker (22 cm half-width, 1.5 m headroom, 20 cm steps). A route the
+  navmesh finds is one you can actually walk.
+- **Stays on the floor.** Bed and desk tops are walkable surfaces too, but nobody can step up 45 cm, so routes never
+  use them; places on furniture snap to the floor beside it.
+- **Real scans are messy.** A shiny floor can scan as a hump, a desk can hide a strip of floor from the phone.
+  `venue.json` can patch floor gaps (`walkableFloor`) and drop artifacts (`cleanup`); the visible scan is unchanged.
+  See [`pipeline/README.md`](pipeline/README.md#make-it-routable).
+- **Click-to-reveal** looks the clicked floor point up in a grid index of POI outlines (`src/poi/spatial.ts`): the object
+  under the cursor first, otherwise the smallest room around it.
+- **Tested.** `npm test` checks that routes go through doorways and never through walls on the demo flat, keep their
+  clearance, and that every tagged place in the real hostel and classroom scans is reachable from the entrance.
+
 ## 🧠 Architecture
 
 ```mermaid
 flowchart TB
     subgraph Frontend["Frontend Application"]
         APP["App.tsx"]
-        UI["UI / HUD"]
+        UI["UI / HUD<br/>search, place card, nav panel, editor"]
         SCENE["VenueScene"]
-        PLAYER["Player Controller"]
+        PLAYER["Player Controller<br/>walk + auto-walk"]
         COLLIDER["Collision System"]
+        NAVRT["Navigation runtime<br/>Recast/Detour (WASM)"]
+        POI["POI layer<br/>labels, picking, index"]
         STATE["Zustand Store"]
     end
 
@@ -216,6 +259,7 @@ flowchart TB
         CONFIG["venue.json"]
         SPLAT["scene.spz"]
         MESH["collider.glb"]
+        PLACES["pois.json"]
     end
 
     APP --> UI
@@ -223,11 +267,17 @@ flowchart TB
     SCENE --> SPARK
     SCENE --> THREE
     SCENE --> PLAYER
+    SCENE --> POI
     PLAYER --> COLLIDER
     PLAYER --> STATE
+    COLLIDER --> NAVRT
+    NAVRT --> STATE
+    UI --> NAVRT
+    POI --> STATE
     SCENE --> CONFIG
     CONFIG --> SPLAT
     CONFIG --> MESH
+    PLACES --> POI
     MESH --> COLLIDER
 ```
 
@@ -240,16 +290,29 @@ doorway/
 │   ├── App.tsx
 │   │
 │   ├── scene/
-│   │   ├── VenueScene.tsx       loads the visual layer + collision mesh
-│   │   ├── Player.tsx           first-person capsule walker
-│   │   ├── CameraDirector.tsx   opening fly-through and overview mode
+│   │   ├── VenueScene.tsx       loads the visual layer, collision mesh, navmesh and places
+│   │   ├── Player.tsx           first-person capsule walker, auto-walk along a route
+│   │   ├── CameraDirector.tsx   fly-through, overview, route preview and "jump there" flights
 │   │   ├── collider.ts          BVH collider and minimap slicing
+│   │   ├── cleanup.ts           drops scan artifacts marked in venue.json
 │   │   └── demoLayout.ts        procedural development layout
+│   ├── nav/
+│   │   ├── navmesh.ts           Recast navmesh build, floor snapping, shortest routes
+│   │   ├── guidance.ts          turn-by-turn instructions and time estimates
+│   │   ├── runtime.ts           navigate / jump / auto-walk actions
+│   │   ├── NavLayer.tsx         route ribbon, goal beacon, walkable-area overlay
+│   │   └── *.test.ts            pathfinding tests (demo flat + real scans)
+│   ├── poi/
+│   │   ├── types.ts, loadPois.ts   pois.json format and validation
+│   │   ├── spatial.ts           grid index for click-to-reveal
+│   │   ├── search.ts            fuzzy search (Fuse.js)
+│   │   ├── PoiLayer.tsx         3D labels, room highlight, picking
+│   │   └── PoiEditor.tsx        tagging editor (?edit=1)
 │   ├── align/                   alignment tool (align.html)
-│   ├── ui/                      top bar, settings, controls, minimap, joystick
+│   ├── ui/                      top bar, search, place card, nav panel, editor panel, minimap
 │   └── venue/                   venue.json types and loading
 │
-├── public/venues/<venue-id>/    venue.json + cleaned scan files
+├── public/venues/<venue-id>/    venue.json + cleaned scan files + pois.json
 │   ├── hostel/                  default venue (live)
 │   ├── classroom/
 │   └── katpadi/                 splat example
@@ -258,6 +321,7 @@ doorway/
 ├── test/                        real sample capture + rebuild steps, and a synthetic test room
 ├── landing/                     landing site; the viewer is served at /experience/
 ├── docs/                        SOP.md, task lists, README images
+├── .github/workflows/ci.yml     type-check, tests, venue checks and build on every push
 ├── vercel.json                  deployment
 ├── package.json
 └── README.md
@@ -323,12 +387,17 @@ and open `http://localhost:4173/`.
 
 | URL (after `/experience/`) | Description |
 |---|---|
-| *(none)* | **Hostel room**: Scaniverse scan, the default venue |
-| `?venue=classroom` | Classroom: a second Scaniverse scan, 9.6 m × 9.2 m |
+| *(none)* | **Hostel room**: Scaniverse scan, the default venue, 5 places tagged |
+| `?venue=classroom` | Classroom: a second Scaniverse scan, 9.6 m × 9.2 m, 7 places (entrance, smart board, seating blocks…) |
+| `?venue=demo` | Procedural flat with a living room, kitchen and bedroom, 12 places: the easiest way to see routing around walls |
 | `?venue=katpadi` | The same capture shown as a Gaussian splat |
-| `?venue=demo` | Procedural demo layout for development (labelled as a demo) |
 | `?venue=sample` | Synthetic test room from `test/venues/sample` |
 | `?venue=<id>` | Any folder in `public/venues/<id>/` |
+| `&poi=<id>` | Opens straight into directions to that place, e.g. `?venue=demo&poi=bedroom` |
+| `&edit=1` | Tagging editor for that venue's places |
+
+**Checks:** `npm test` (pathfinding, search, POI validation), `npm run typecheck`, `npm run check:venue -- public/venues/<id>`.
+GitHub Actions runs all of them, plus the build, on every push.
 
 ---
 
@@ -347,6 +416,12 @@ and open `http://localhost:4173/`.
 | Skip the opening fly-through | Any key or click | Tap |
 | Show controls | `H` | On-screen UI |
 | Release mouse | `Esc` | — |
+| Search places | `Ctrl K` or `/` | Search button |
+| Reveal a room or object's name | Aim the crosshair and click, or click it in the overview | Tap a label |
+| Show the way to the selected place | `Enter` | Card button |
+| Jump there | `J` (or `Shift Enter` in search) | Card button |
+| Walk me there (auto-walk) | `G` | Panel button |
+| Stop navigating / close the card | `Esc` | Panel button |
 
 **Desktop tip:** Click inside the 3D viewer to activate mouse look.
 
@@ -383,13 +458,23 @@ Then write `public/venues/home/venue.json` and line the model up with the alignm
 Only have a point cloud? `node pipeline/points-to-venue.mjs scan.ply public/venues/home --z-up` builds the whole
 venue, collision included. A full worked example with a real capture is in [`test/README.md`](test/README.md).
 
-### Step 4 — Validate
+### Step 4 — Tag places
+
+Open `http://localhost:5173/experience/?venue=home&edit=1`, press **V** for the overview, then **+ Add place**
+and click where the label should go. Name it, pick a category, add other names people might search for,
+and **Draw zone** around rooms (click the corners, Enter to finish). **Download pois.json** into
+`public/venues/home/`. The format is in [`pipeline/README.md`](pipeline/README.md#places-poisjson).
+
+### Step 5 — Validate
 
 ```bash
 npm run check:venue -- public/venues/home
 ```
 
-### Step 5 — Explore
+Turn on *Settings → Show walkable area* to see where routes can go. If a scan gap or artifact cuts the floor in two,
+fix it with `walkableFloor` / `cleanup` in `venue.json` ([how](pipeline/README.md#make-it-routable)).
+
+### Step 6 — Explore
 
 ```text
 http://localhost:5173/experience/?venue=home
@@ -416,12 +501,14 @@ The project is being developed in three stages.
 
 ### Round 02 — Intelligent Navigation
 
-- [ ] Point-of-interest identification
-- [ ] Interactive spatial labels
-- [ ] Searchable indoor destinations
-- [ ] Obstacle-aware desktop navigation
-- [ ] Navigation mesh integration
-- [ ] Improved spatial interaction
+- [x] Points of interest per venue (`pois.json`): rooms with floor outlines, objects, exits
+- [x] Interactive 3D labels and click-to-reveal on the scan (grid spatial index)
+- [x] Fuzzy search with walking distances (Ctrl K), shareable `?poi=` links
+- [x] Navigation mesh built in the browser from the scan's collision mesh (Recast)
+- [x] Obstacle-aware shortest routes (Detour), recomputed as you walk, with turn-by-turn guidance
+- [x] Route preview, jump-there and auto-walk camera transitions
+- [x] Tagging editor (`?edit=1`) and scan repairs for routing (`walkableFloor`, `cleanup`)
+- [x] Tests for pathfinding on the demo flat and real scans; CI on every push
 
 ### Round 03 — Augmented Reality
 
@@ -447,7 +534,10 @@ The project is being developed in three stages.
 | 3D Rendering | Three.js, React Three Fiber |
 | Splat Rendering | Spark |
 | Collision Detection | three-mesh-bvh |
+| Navigation | recast-navigation-js (Recast navmesh + Detour pathfinding, WebAssembly) |
+| Search | Fuse.js |
 | State Management | Zustand |
+| Testing & CI | Vitest, GitHub Actions |
 | Styling | Tailwind CSS |
 | Spatial Assets | Textured GLB meshes, Gaussian splats (.spz / .ply), point clouds (.ply) |
 | Capture | Scaniverse (used for both live venues); Polycam as an alternative |

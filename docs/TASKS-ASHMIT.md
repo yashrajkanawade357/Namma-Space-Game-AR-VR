@@ -94,7 +94,9 @@ The brief asks for setup instructions plus sample data in a test directory.
 
 ## B. After Oct 31: Round 2 (due Nov 30)
 
-Start only after Round 1 is submitted.
+**Status (Nov 18):** B1–B5 are built on the `round-2` branch (navmesh, route drawing, POIs with the
+`?edit=1` editor, Ctrl+K search, overview). B7 isn't needed. What's left for Round 2: tag the new
+multi-room scan's places, test on phones, and the AR test (B6) for the finale.
 
 | # | Task | Notes |
 | --- | --- | --- |

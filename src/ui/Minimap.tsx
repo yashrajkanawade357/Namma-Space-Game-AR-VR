@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useApp } from "../store";
 import type { FloorSlice } from "../scene/collider";
+import { CATEGORIES } from "../poi/types";
 
 const SIZE = 168;
 const PAD = 10;
 
-/** Top-down plan cut from the collision mesh, with the visitor's position and view cone. */
+/** Top-down plan cut from the collision mesh, with places, the active route, and the visitor's position and view cone. */
 export function Minimap({ slice }: { slice: FloorSlice | null }) {
   const planRef = useRef<HTMLCanvasElement>(null);
   const dotRef = useRef<HTMLCanvasElement>(null);
   const pose = useApp((s) => s.pose);
+  const pois = useApp((s) => s.pois);
+  const nav = useApp((s) => s.nav);
+  const selectedPoiId = useApp((s) => s.selectedPoiId);
 
   const fit = useMemo(() => {
     if (!slice) return null;
@@ -54,8 +58,36 @@ export function Minimap({ slice }: { slice: FloorSlice | null }) {
     const ctx = c.getContext("2d")!;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, SIZE, SIZE);
-    const x = fit.ox + pose.x * fit.scale;
-    const y = fit.oz + pose.z * fit.scale;
+    const px = (wx: number) => fit.ox + wx * fit.scale;
+    const pz = (wz: number) => fit.oz + wz * fit.scale;
+
+    // Places: small dots in their category colour; the destination larger and ringed.
+    for (const poi of pois) {
+      const target = poi.id === nav?.poiId || poi.id === selectedPoiId;
+      ctx.fillStyle = CATEGORIES[poi.category].color;
+      ctx.beginPath();
+      ctx.arc(px(poi.position[0]), pz(poi.position[2]), target ? 4.5 : 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      if (target) {
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+    }
+    // The route, so the visitor can see the way ahead at a glance.
+    if (nav && nav.route.length > 1) {
+      ctx.strokeStyle = "#12a37d";
+      ctx.lineWidth = 3;
+      ctx.lineJoin = ctx.lineCap = "round";
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      nav.route.forEach((p, i) => (i ? ctx.lineTo(px(p.x), pz(p.z)) : ctx.moveTo(px(p.x), pz(p.z))));
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    const x = px(pose.x);
+    const y = pz(pose.z);
     // Camera yaw 0 looks towards -Z, which is "up" on the map.
     const dir = -Math.PI / 2 - pose.yaw;
     ctx.fillStyle = "rgba(29,158,117,0.22)";
@@ -71,7 +103,7 @@ export function Minimap({ slice }: { slice: FloorSlice | null }) {
     ctx.arc(x, y, 5, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-  }, [pose, fit]);
+  }, [pose, fit, pois, nav, selectedPoiId]);
 
   if (!slice) return null;
   return (

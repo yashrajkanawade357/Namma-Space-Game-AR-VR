@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "pois": [
+    {
+      "id": "entrance",
+      "name": "Entrance",
+      "category": "exit",
+      "aliases": ["door", "exit", "main door"],
+      "position": [3.3, 0, -3.7]
+    },
+    {
+      "id": "smart-board",
+      "name": "Smart board",
+      "category": "info",
+      "aliases": ["tv", "screen", "display", "projector", "board"],
+      "position": [4.2, 1.3, 0.85]
+    },
+    {
+      "id": "lecturers-desk",
+      "name": "Lecturer's desk",
+      "category": "desk",
+      "aliases": ["teacher", "professor", "faculty desk", "podium"],
+      "position": [3.55, 0.8, -0.9]
+    },
+    {
+      "id": "front-stage",
+      "name": "Front stage",
+      "category": "info",
+      "aliases": ["board", "whiteboard", "front", "dais"],
+      "description": "Raised platform at the front of the class",
+      "position": [3.7, 0.2, 0.6],
+      "zone": [[3.0, -2.9], [4.5, -2.9], [4.5, 4.0], [3.0, 4.0]]
+    },
+    {
+      "id": "seating-block-a",
+      "name": "Seating block A",
+      "category": "seating",
+      "aliases": ["benches", "seats", "north rows", "left block"],
+      "description": "Five rows of benches, north side",
+      "position": [-1.0, 0.75, -1.5],
+      "zone": [[-4.3, -3.0], [2.4, -3.0], [2.4, -0.05], [-4.3, -0.05]]
+    },
+    {
+      "id": "seating-block-b",
+      "name": "Seating block B",
+      "category": "seating",
+      "aliases": ["benches", "seats", "south rows", "right block"],
+      "description": "Five rows of benches, south side",
+      "position": [-1.0, 0.75, 2.6],
+      "zone": [[-4.3, 1.1], [2.5, 1.1], [2.5, 4.3], [-4.3, 4.3]]
+    },
+    {
+      "id": "centre-aisle",
+      "name": "Centre aisle",
+      "category": "room",
+      "aliases": ["aisle", "walkway", "middle"],
+      "position": [-1.0, 0, 0.5],
+      "zone": [[-4.6, -0.05], [3.0, -0.05], [3.0, 1.1], [-4.6, 1.1]]
+    }
+  ]
+}

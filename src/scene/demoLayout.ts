@@ -55,8 +55,9 @@ export function buildDemoLayout(): THREE.Group {
   box(2.2, 0.4, 0.22, -2.6, 0.45, 3.65, sofa);
   box(0.9, 0.45, 1.6, -4.3, 0, 2.4, sofa);
   box(1.1, 0.4, 0.6, -2.6, 0, 2.1, mat(0xb08a5e));
-  box(1.8, 0.5, 0.4, -2.6, 0, 0.9, mat(0x3a3a38));
-  box(1.3, 0.75, 0.15, -2.6, 0.5, 0.82, mat(0x111111, 0.3));
+  // TV unit against the bedroom wall, west of the bedroom door so the doorway stays clear.
+  box(1.8, 0.5, 0.4, -3.4, 0, 0.9, mat(0x3a3a38));
+  box(1.3, 0.75, 0.15, -3.4, 0.5, 0.82, mat(0x111111, 0.3));
   box(1.4, 0.75, 0.9, 1.8, 0, 2.6, mat(0x8a6a4a));
   for (const [x, z] of [[1.3, 2], [2.3, 2], [1.3, 3.2], [2.3, 3.2]]) box(0.45, 0.45, 0.45, x, 0, z, mat(0x2f2f2d));
 

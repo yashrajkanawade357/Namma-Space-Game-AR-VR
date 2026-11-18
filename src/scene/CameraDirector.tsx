@@ -11,12 +11,19 @@ const TRANSITION = 1.3;
 
 const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
+/** Route preview: rise, hold over the route, come back down. */
+const PREVIEW_UP = 1.2;
+const PREVIEW_HOLD = 1.6;
+const JUMP = 1.8;
+
 interface Flight {
   from: { position: THREE.Vector3; quaternion: THREE.Quaternion };
   to: () => { position: THREE.Vector3; quaternion: THREE.Quaternion };
   start: number;
   duration: number;
   then: () => void;
+  /** Extra height at the middle of the flight, so jumps arc over walls instead of through them. */
+  arc: number;
 }
 
 /**
@@ -65,7 +72,19 @@ export function CameraDirector({ bounds }: { bounds: THREE.Box3 }) {
   };
   const eyePose = () => ({ position: playerView.position.clone(), quaternion: playerView.quaternion.clone() });
 
-  const fly = (to: Flight["to"], duration: number, then: () => void, now: number) => {
+  /** Looks down on the visitor, the route and the goal together, a little tilted so walls read as walls. */
+  const routePose = () => {
+    const box = new THREE.Box3().expandByPoint(playerView.position.clone().setY(0));
+    for (const p of useApp.getState().nav?.route ?? []) box.expandByPoint(new THREE.Vector3(p.x, 0, p.z));
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const span = Math.max(size.x, size.z, 3);
+    const position = center.clone().add(new THREE.Vector3(0, span * 1.05 + 1.5, span * 0.38));
+    const m = new THREE.Matrix4().lookAt(position, center, new THREE.Vector3(0, 1, 0));
+    return { position, quaternion: new THREE.Quaternion().setFromRotationMatrix(m) };
+  };
+
+  const fly = (to: Flight["to"], duration: number, then: () => void, now: number, arc = 0) => {
     controls.enabled = false;
     playerView.flying = true;
     flight.current = {
@@ -74,8 +93,11 @@ export function CameraDirector({ bounds }: { bounds: THREE.Box3 }) {
       start: now,
       duration,
       then,
+      arc,
     };
   };
+  const teleportToken = useRef(useApp.getState().teleport?.token ?? 0);
+  const previewToken = useRef(useApp.getState().routePreview?.token ?? 0);
 
   // Any click or key during the intro skips straight to walking.
   useEffect(() => {
@@ -112,6 +134,23 @@ export function CameraDirector({ bounds }: { bounds: THREE.Box3 }) {
       prevView.current = current;
     }
 
+    // "Jump there": arc from wherever the camera is to the walker's new eyes.
+    const { teleport, routePreview } = useApp.getState();
+    if (teleport && teleport.token !== teleportToken.current) {
+      teleportToken.current = teleport.token;
+      const dist = camera.position.distanceTo(playerView.position);
+      fly(eyePose, JUMP, () => undefined, now, Math.min(4, 0.8 + dist * 0.3));
+    }
+
+    // Route preview after starting navigation: up over the whole route, a pause, back to the eyes.
+    if (routePreview && routePreview.token !== previewToken.current) {
+      previewToken.current = routePreview.token;
+      if (current === "walk") {
+        const pose = routePose();
+        fly(() => pose, PREVIEW_UP, () => fly(() => pose, PREVIEW_HOLD, () => fly(eyePose, PREVIEW_UP, () => undefined, state.clock.elapsedTime), state.clock.elapsedTime), now);
+      }
+    }
+
     if (current === "intro" && !loading) {
       // A slow orbit high above the room, then a glide down to the visitor's eyes.
       if (introStart.current === null) introStart.current = now;
@@ -131,6 +170,7 @@ export function CameraDirector({ bounds }: { bounds: THREE.Box3 }) {
       const k = ease(Math.min(1, (now - f.start) / f.duration));
       const to = f.to();
       camera.position.lerpVectors(f.from.position, to.position, k);
+      camera.position.y += Math.sin(Math.PI * k) * f.arc;
       camera.quaternion.slerpQuaternions(f.from.quaternion, to.quaternion, k);
       if (k >= 1) {
         flight.current = null;
@@ -150,16 +190,18 @@ export function CameraDirector({ bounds }: { bounds: THREE.Box3 }) {
 /** The visitor's position and facing, shown while the camera is away from their eyes. */
 function PlayerMarker() {
   const ref = useRef<THREE.Group>(null);
-  const view = useApp((s) => s.view);
   useFrame(() => {
     const g = ref.current;
     if (!g) return;
-    g.position.set(playerView.position.x, playerView.position.y - 1.55, playerView.position.z);
+    // Shown from above: in the overview, and during route previews and jumps.
+    const v = useApp.getState().view;
+    g.visible = v === "overview" || (v === "walk" && playerView.flying);
+    g.position.set(playerView.position.x, playerView.position.y - playerView.eye, playerView.position.z);
     const e = new THREE.Euler().setFromQuaternion(playerView.quaternion, "YXZ");
     g.rotation.set(0, e.y, 0);
   });
   return (
-    <group ref={ref} visible={view === "overview"}>
+    <group ref={ref} visible={false}>
       <mesh position={[0, 0.04, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.32, 0.42, 40]} />
         <meshBasicMaterial color="#1d9e75" toneMapped={false} />

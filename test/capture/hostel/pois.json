@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "pois": [
+    {
+      "id": "hostel-room",
+      "name": "Hostel room",
+      "category": "room",
+      "aliases": ["room", "dorm"],
+      "description": "Twin room, 5.0 m × 4.9 m",
+      "position": [0, 0, 0.2],
+      "zone": [[0.2, -2.45], [2.5, 0.05], [0, 2.47], [-2.5, 0.3]]
+    },
+    {
+      "id": "bed-1",
+      "name": "Bed 1",
+      "category": "item",
+      "aliases": ["cot", "bunk", "red blanket"],
+      "position": [-1.35, 0.5, 0.78]
+    },
+    {
+      "id": "bed-2",
+      "name": "Bed 2",
+      "category": "item",
+      "aliases": ["cot", "bunk"],
+      "position": [0.55, 0.5, -1.2]
+    },
+    {
+      "id": "study-desk-1",
+      "name": "Study desk 1",
+      "category": "desk",
+      "aliases": ["table", "study table"],
+      "position": [-0.85, 0.75, -0.62]
+    },
+    {
+      "id": "study-desk-2",
+      "name": "Study desk 2",
+      "category": "desk",
+      "aliases": ["table", "study table", "laptop"],
+      "position": [1.6, 0.75, -0.3]
+    }
+  ]
+}

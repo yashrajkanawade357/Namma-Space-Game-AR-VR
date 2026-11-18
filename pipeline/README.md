@@ -64,6 +64,63 @@ It levels and centres the cloud, generates the collision model from it (a floor 
 facing across the room. A mesh or splat export of the same scan still looks better; use this when that is
 all there is.
 
+## Places (pois.json)
+
+Each venue can have `public/venues/<venue>/pois.json`. Tag it with the editor
+(`/experience/?venue=<venue>&edit=1`, then **V**, **+ Add place**, click, name, **Download pois.json**) or by hand:
+
+```json
+{
+  "version": 1,
+  "pois": [
+    {
+      "id": "meeting-room-4",
+      "name": "Meeting Room 4",
+      "category": "room",
+      "aliases": ["mr4", "conference room"],
+      "description": "Seats 8, screen on the north wall",
+      "position": [3.2, 0, -1.5],
+      "zone": [[1, -4], [5, -4], [5, -0.2], [1, -0.2]]
+    }
+  ]
+}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `id` | Lowercase slug; used in links (`?poi=meeting-room-4`) |
+| `name` | What visitors see and search for |
+| `category` | `room`, `seating`, `desk`, `facility`, `storage`, `exit`, `info` or `item` (sets the colour) |
+| `aliases` | Other words people search with; fuzzy search also forgives typos |
+| `position` | Where the label sits, in venue metres (+Y up, floor at 0). Routes end on the floor beside it |
+| `zone` | Optional floor outline, `[x, z]` corners. Clicking anywhere inside reveals the place; it lights up when selected |
+
+`npm run check:venue` validates the file; the viewer refuses a broken one with a readable error.
+
+## Make it routable
+
+Routes are computed on a navigation mesh built from the venue's collision mesh when it loads (about 0.1 s for
+a 200k-triangle room). Turn on *Settings → Show walkable area* to see it. Phone scans sometimes break the floor
+into pieces: a shiny floor scanned as a hump, or a strip of floor the phone never saw behind a desk. Two
+`venue.json` fields repair that for walking and routing without touching what visitors see:
+
+```json
+"walkableFloor": [
+  { "position": [-1.1, -0.05, 0.53], "size": [7.0, 1.05] }
+],
+"cleanup": [
+  { "zone": [[-4.6, 0.0], [2.4, 0.0], [2.4, 1.05], [-4.6, 1.05]], "below": 0.95 }
+]
+```
+
+- `walkableFloor`: invisible floor slabs (one or a list); the top sits 5 cm above `position`.
+- `cleanup`: inside each outline, scan triangles entirely below `below` metres are ignored (floor humps,
+  stretched triangles across an aisle, a bag left on the floor). Use it with a floor patch when the
+  artifact *was* the floor.
+
+The classroom venue uses both. `npm test` then proves every tagged place is reachable from the start point
+(`src/nav/scans.test.ts`); add your venue's id to the list there.
+
 ## Time each step
 
 The finale (Dec 16) is a timed on-site capture. Log how long every step takes on each practice run in

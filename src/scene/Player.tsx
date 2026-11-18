@@ -5,8 +5,11 @@ import type { MeshBVH } from "three-mesh-bvh";
 import { toggleOverview, useApp } from "../store";
 import type { VenueConfig } from "../venue/types";
 import { playerView } from "./playerView";
+import { pointAlong, setAutoWalk } from "../nav/runtime";
+import { AGENT } from "../nav/navmesh";
 
-const RADIUS = 0.3;
+/** Same as the routing agent, so walking and the routes agree on what fits through a gap. */
+const RADIUS = AGENT.radius;
 const GRAVITY = -20;
 const SUBSTEPS = 5;
 const LOOK_SPEED = 0.0022;
@@ -17,6 +20,9 @@ const ACCELERATION = 9;
 /** Head bob: vertical sway in metres at full walking speed, and steps per metre. */
 const BOB_HEIGHT = 0.022;
 const BOB_STEPS_PER_METRE = 1.7;
+/** Auto-walk aims at the route this far ahead, and turns towards it at this rate (per second). */
+const LOOKAHEAD = 0.8;
+const AUTO_TURN = 5;
 
 /**
  * First-person walker. The player is a capsule whose top sits at eye level; every
@@ -46,6 +52,20 @@ export function Player({ venue, collider }: { venue: VenueConfig; collider: THRE
   const keys = useRef(new Set<string>());
   const lastPose = useRef(0);
   const resetToken = useApp((s) => s.resetToken);
+  const teleport = useApp((s) => s.teleport);
+
+  // "Jump there" from search: move the body; the camera director flies the view to it.
+  useEffect(() => {
+    if (!teleport) return;
+    const [x, y, z] = teleport.position;
+    body.position.set(x, y + eye, z);
+    body.velocity.set(0, 0, 0);
+    body.walk.set(0, 0, 0);
+    body.yaw = teleport.yaw;
+    body.pitch = -0.12;
+    playerView.position.copy(body.position);
+    playerView.quaternion.setFromEuler(new THREE.Euler(body.pitch, body.yaw, 0, "YXZ"));
+  }, [teleport, body, eye]);
 
   // Spawn, and respawn whenever the reset button bumps the token.
   useEffect(() => {
@@ -55,6 +75,7 @@ export function Player({ venue, collider }: { venue: VenueConfig; collider: THRE
     body.walk.set(0, 0, 0);
     body.yaw = THREE.MathUtils.degToRad(venue.spawn.yaw ?? 0);
     body.pitch = 0;
+    playerView.eye = eye;
     // The intro flies to this pose before the walker takes over.
     playerView.position.copy(body.position);
     playerView.quaternion.setFromEuler(new THREE.Euler(0, body.yaw, 0, "YXZ"));
@@ -146,6 +167,12 @@ export function Player({ venue, collider }: { venue: VenueConfig; collider: THRE
 
   useFrame((state, frameDelta) => {
     const { speed, stick, helpOpen, view } = useApp.getState();
+    // Turn requested while the camera was away (a new route): face it before walking on.
+    if (playerView.pendingYaw !== null) {
+      body.yaw = playerView.pendingYaw;
+      body.pitch = -0.12;
+      playerView.pendingYaw = null;
+    }
     // The intro and the overview fly the camera themselves; the walker waits where it stands.
     if (view !== "walk" || playerView.flying) return;
     const bvh = (collider.geometry as THREE.BufferGeometry & { boundsTree?: MeshBVH }).boundsTree;
@@ -163,6 +190,21 @@ export function Player({ venue, collider }: { venue: VenueConfig; collider: THRE
       if (k.has("KeyA") || k.has("ArrowLeft")) side -= 1;
       fwd += stick.y;
       side += stick.x;
+    }
+
+    // Auto-walk: steer along the route like a game character until the visitor touches the keys.
+    const { nav } = useApp.getState();
+    if (nav?.autoWalk) {
+      if (fwd !== 0 || side !== 0) setAutoWalk(false);
+      else if (nav.route.length > 1) {
+        const target = pointAlong(nav.route, LOOKAHEAD);
+        const want = Math.atan2(-(target.x - body.position.x), -(target.z - body.position.z));
+        const turn = Math.atan2(Math.sin(want - body.yaw), Math.cos(want - body.yaw));
+        body.yaw += turn * (1 - Math.exp(-AUTO_TURN * frameDt));
+        body.pitch += (-0.18 - body.pitch) * (1 - Math.exp(-3 * frameDt));
+        // Slow down for sharp corners instead of skidding around them, and ease into the goal.
+        fwd = Math.max(0.25, Math.cos(turn)) * Math.min(1, nav.remaining / 1.2 + 0.3);
+      }
     }
     const run = k.has("ShiftLeft") || k.has("ShiftRight") ? RUN_MULTIPLIER : 1;
     tmp.forward.set(-Math.sin(body.yaw), 0, -Math.cos(body.yaw));

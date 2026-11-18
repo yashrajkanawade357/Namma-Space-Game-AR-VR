@@ -1,4 +1,7 @@
 import { create } from "zustand";
+import type { Poi } from "./poi/types";
+import type { Instruction } from "./nav/guidance";
+import type { Point } from "./nav/navmesh";
 
 export type Quality = "low" | "medium" | "high";
 
@@ -17,6 +20,23 @@ interface PlayerPose {
  */
 export type View = "intro" | "walk" | "overview";
 
+/** Active turn-by-turn navigation towards one POI. */
+export interface NavState {
+  poiId: string;
+  /** Walkable floor point beside the POI that the route ends at. */
+  goal: Point;
+  /** Route from the visitor's feet to the goal, recomputed as they move. */
+  route: Point[];
+  /** Walking distance left, metres. */
+  remaining: number;
+  instruction: Instruction;
+  arrived: boolean;
+  /** The walker follows the route by itself until the visitor takes over with the keys. */
+  autoWalk: boolean;
+  /** False when the goal can't be reached and the route stops at the closest point instead. */
+  reachable: boolean;
+}
+
 interface AppState {
   loading: { label: string; progress: number } | null;
   view: View;
@@ -33,6 +53,20 @@ interface AppState {
   resetToken: number;
   /** Joystick vector from the touch controls, x = strafe, y = forward, each -1..1. */
   stick: { x: number; y: number };
+  pois: Poi[];
+  selectedPoiId: string | null;
+  searchOpen: boolean;
+  nav: NavState | null;
+  /** True once the walkable area (navmesh) has been built for this venue. */
+  navReady: boolean;
+  showNavmesh: boolean;
+  showLabels: boolean;
+  /** Bumped to move the walker to a new pose behind a camera flight (search "Jump there"). */
+  teleport: { position: [number, number, number]; yaw: number; token: number } | null;
+  /** Bumped to fly up, show the whole route from above, then come back down to the eyes. */
+  routePreview: { token: number } | null;
+  /** ?edit=1: place, rename and export POIs. */
+  editMode: boolean;
   set: (patch: Partial<AppState>) => void;
   reset: () => void;
 }
@@ -50,6 +84,16 @@ export const useApp = create<AppState>((set) => ({
   pose: { x: 0, z: 0, yaw: 0 },
   resetToken: 0,
   stick: { x: 0, y: 0 },
+  pois: [],
+  selectedPoiId: null,
+  searchOpen: false,
+  nav: null,
+  navReady: false,
+  showNavmesh: false,
+  showLabels: true,
+  teleport: null,
+  routePreview: null,
+  editMode: new URLSearchParams(window.location.search).get("edit") === "1",
   set: (patch) => set(patch),
   reset: () => set((s) => ({ resetToken: s.resetToken + 1 })),
 }));
